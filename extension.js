@@ -1,53 +1,80 @@
+'use strict';
 
+const Gio = imports.gi.Gio;
+const GLib = imports.gi.GLib;
+const GObject = imports.gi.GObject;
 const St = imports.gi.St;
+
+const ExtensionUtils = imports.misc.extensionUtils;
+const Me = ExtensionUtils.getCurrentExtension();
 const Main = imports.ui.main;
-const Tweener = imports.ui.tweener;
+const PanelMenu = imports.ui.panelMenu;
 
-let text, button;
+// For compatibility checks, as described above
+const Config = imports.misc.config;
+const SHELL_MINOR = parseInt(Config.PACKAGE_VERSION.split('.')[1]);
 
-function _hideHello() {
-    Main.uiGroup.remove_actor(text);
-    text = null;
-}
 
-function _showHello() {
-    if (!text) {
-        text = new St.Label({ style_class: 'helloworld-label', text: "Hello, world!" });
-        Main.uiGroup.add_actor(text);
+// We'll extend the Button class from Panel Menu so we can do some setup in
+// the init() function.
+var Indicator = class Indicator extends PanelMenu.Button {
+
+    _init() {
+        super._init(0.0, `${Me.metadata.name} Indicator`, false);
+
+        // Pick an icon
+        let icon = new St.Icon({
+            gicon: new Gio.ThemedIcon({name: 'face-laugh-symbolic'}),
+            style_class: 'system-status-icon'
+        });
+        this.actor.add_child(icon);
+
+        // Add a menu item
+        this.menu.addAction('Menu Item', this.menuAction, null);
     }
 
-    text.opacity = 255;
-
-    let monitor = Main.layoutManager.primaryMonitor;
-
-    text.set_position(monitor.x + Math.floor(monitor.width / 2 - text.width / 2),
-                      monitor.y + Math.floor(monitor.height / 2 - text.height / 2));
-
-    Tweener.addTween(text,
-                     { opacity: 0,
-                       time: 2,
-                       transition: 'easeOutQuad',
-                       onComplete: _hideHello });
+    menuAction() {
+        log('Menu item activated');
+    }
 }
+
+// Compatibility with gnome-shell >= 3.32
+if (SHELL_MINOR > 30) {
+    Indicator = GObject.registerClass(
+        {GTypeName: 'Indicator'},
+        Indicator
+    );
+}
+
+// We're going to declare `indicator` in the scope of the whole script so it can
+// be accessed in both `enable()` and `disable()`
+var indicator = null;
+
 
 function init() {
-    button = new St.Bin({ style_class: 'panel-button',
-                          reactive: true,
-                          can_focus: true,
-                          x_fill: true,
-                          y_fill: false,
-                          track_hover: true });
-    let icon = new St.Icon({ icon_name: 'system-run-symbolic',
-                             style_class: 'system-status-icon' });
-
-    button.set_child(icon);
-    button.connect('button-press-event', _showHello);
+    log(`initializing ${Me.metadata.name} version ${Me.metadata.version}`);
 }
+
 
 function enable() {
-    Main.panel._rightBox.insert_child_at_index(button, 0);
+    log(`enabling ${Me.metadata.name} version ${Me.metadata.version}`);
+
+    indicator = new Indicator();
+
+    // The `main` import is an example of file that is mostly live instances of
+    // objects, rather than reusable code. `Main.panel` is the actual panel you
+    // see at the top of the screen.
+    Main.panel.addToStatusArea(`${Me.metadata.name} Indicator`, indicator);
 }
 
+
 function disable() {
-    Main.panel._rightBox.remove_child(button);
+    log(`disabling ${Me.metadata.name} version ${Me.metadata.version}`);
+
+    // REMINDER: It's required for extensions to clean up after themselves when
+    // they are disabled. This is required for approval during review!
+    if (indicator !== null) {
+        indicator.destroy();
+        indicator = null;
+    }
 }
