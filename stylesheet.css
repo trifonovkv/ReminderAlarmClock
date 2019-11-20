@@ -1,9 +1,9 @@
 
-.helloworld-label {
+.message-label {
     font-size: 64px;
     font-weight: bold;
-    color: #ffffff;
-    background-color: rgba(10,10,10,0.7);
+    color: #008f11;
+    background-color: #0d0208;
     border-radius: 5px;
     padding: .5em;
 }
