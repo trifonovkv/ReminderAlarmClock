@@ -20,22 +20,12 @@ const SHELL_MINOR = parseInt(Config.PACKAGE_VERSION.split('.')[1]);
 
 const MESSAGE = "Wake up, Neo..."
 
-const setTimeout = function (func, milliseconds /* , ... args */) {
 
-    let args = [];
-    if (arguments.length > 2) {
-        args = args.slice.call(arguments, 2);
-    }
+let notificationTextLabel;
+let alarmTimeLabel = new St.Label({ style_class: 'message-label' });
+let totalTimeoutMinutes = 0;
 
-    let id = MainLoop.timeout_add(milliseconds, () => {
-        func.apply(null, args);
-        return false; // Stop repeating
-    }, null);
-
-    return id;
-};
-
-let TextLabel;
+let sourceID = 0;
 
 // We'll extend the Button class from Panel Menu so we can do some setup in
 // the init() function.
@@ -45,77 +35,117 @@ var Indicator = class Indicator extends PanelMenu.Button {
         super._init(0.0, `${Me.metadata.name} Indicator`, false);
 
         // Pick an icon
-        let icon = new St.Icon({
+        this.actor.add_child(new St.Icon({
             gicon: new Gio.ThemedIcon({ name: 'face-laugh-symbolic' }),
             style_class: 'system-status-icon'
+        }));
+
+        let buttonsBox = createButtonsBox([
+            '0', '+1', '+2', '+5', '+10', '+15', '+30', '+60'
+        ]);
+              
+        addWidgetsToMenu(this.menu, [alarmTimeLabel, buttonsBox]); 
+    }
+}
+
+function addWidgetsToMenu(menu, widgets) {
+    widgets.forEach(widget => {
+        menu.addMenuItem(createMenuItem(widget));
+    });
+    
+    function createMenuItem(item) {
+        let menuItem = new PopupMenu.PopupBaseMenuItem({ 
+            reactive: false, can_focus: false 
         });
+        menuItem.actor.add(item, { expand: true });
+        return menuItem;
+    }
+}
 
-        this.actor.add_child(icon);
+function createButtonsBox(labels) {
+    let box = new St.BoxLayout({ x_expand: true });
+    labels.forEach(label => {
+        box.add_child(createButton(label, buttonCallback));
+    });
+    return box;
 
-        this._entryItem = new PopupMenu.PopupBaseMenuItem({
-            reactive: false,
-            can_focus: false
+    function createButton(label, callback) {
+        let button = new St.Button({
+            label: label,
+            can_focus: true,
+            x_expand: true,
+            style_class: 'button',
         });
+        button.connect('clicked', callback);
+        return button;
+    }
 
-        function createButton(label, callback) {
-            let button = new St.Button({
-                label: label,
-                can_focus: true,
-                x_expand: true,
-                style_class: 'button',
-            });
-            button.connect('clicked', callback);
-            return button;
+    function buttonCallback(button) {
+        let minutes = parseInt(button.label, 10);
+        // handle press a zero button
+        if (minutes === 0) {
+            totalTimeoutMinutes = 0;
         }
+        totalTimeoutMinutes += minutes;
+        alarmTimeLabel.text = totalTimeoutMinutes.toString();
+        let milliseconds = totalTimeoutMinutes * 60 * 1000;
+        removeTimeout(sourceID);
+        sourceID = setTimeout(timeoutCallback, milliseconds);
 
-        function createButtonsBox(labels) {
-            let box = new St.BoxLayout({ x_expand: true });
-            labels.forEach(label => {
-                box.add_child(createButton(label, buttonCallback));
-            });
-            return box;
+        function setTimeout(func, milliseconds /* , ... args */) {
 
-            function buttonCallback(button) {
-                log(`Button ${button.label} activated`);
-                let minutes = parseInt(button.label, 10);
-                let milliseconds = minutes * 60 * 1000;
-                log(`${milliseconds}`);
-                setTimeout(showMessage, milliseconds);
+            let args = [];
+            if (arguments.length > 2) {
+                args = args.slice.call(arguments, 2);
             }
+
+            let id = MainLoop.timeout_add(milliseconds, () => {
+                func.apply(null, args);
+                return false; // Stop repeating
+            }, null);
+
+            return id;
+        };
+
+        function removeTimeout(timeoutID) {
+            if (timeoutID == 0) return
+            MainLoop.source_remove(timeoutID);
+        }
+    }
+}
+
+function timeoutCallback() {
+    showMessage();
+    alarmTimeLabel.text = '0';
+    totalTimeoutMinutes = 0;
+
+    function showMessage() {
+        if (!notificationTextLabel) {
+            notificationTextLabel = new St.Label({ style_class: 'message-label', text: MESSAGE });
+            Main.uiGroup.add_actor(notificationTextLabel);
         }
 
-        let buttonsBox = createButtonsBox(['+1', '+2', '+5', '+10', '+15', '+30', '+60']);
-        this._entryItem.actor.add(buttonsBox, { expand: true });
+        notificationTextLabel.opacity = 255;
 
-        this.menu.addMenuItem(this._entryItem);
+        let monitor = Main.layoutManager.primaryMonitor;
+
+        notificationTextLabel.set_position(monitor.x + Math.floor(monitor.width / 2 - notificationTextLabel.width / 2),
+            monitor.y + Math.floor(monitor.height / 2 - notificationTextLabel.height / 2));
+
+        Tweener.addTween(notificationTextLabel,
+            {
+                opacity: 0,
+                time: 5,
+                transition: 'easeInQuint',
+                onComplete: hideMessage
+            }
+        );
+
+        function hideMessage() {
+            Main.uiGroup.remove_actor(notificationTextLabel);
+            notificationTextLabel = null;
+        }
     }
-}
-
-function showMessage() {
-    if (!TextLabel) {
-        TextLabel = new St.Label({ style_class: 'message-label', text: MESSAGE });
-        Main.uiGroup.add_actor(TextLabel);
-    }
-
-    TextLabel.opacity = 255;
-
-    let monitor = Main.layoutManager.primaryMonitor;
-
-    TextLabel.set_position(monitor.x + Math.floor(monitor.width / 2 - TextLabel.width / 2),
-        monitor.y + Math.floor(monitor.height / 2 - TextLabel.height / 2));
-
-    Tweener.addTween(TextLabel,
-        {
-            opacity: 0,
-            time: 5,
-            transition: 'easeInQuint',
-            onComplete: hideMessage
-        });
-}
-
-function hideMessage() {
-    Main.uiGroup.remove_actor(TextLabel);
-    TextLabel = null;
 }
 
 // Compatibility with gnome-shell >= 3.32

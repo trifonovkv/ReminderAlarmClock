@@ -3,4 +3,4 @@ ref: design ui
 add: three state icon
 add: message entry 
 ref: notification
-add: label
+ref: alarm time label show alarm time
