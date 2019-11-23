@@ -18,16 +18,15 @@ const Tweener = imports.ui.tweener;
 const Config = imports.misc.config;
 const SHELL_MINOR = parseInt(Config.PACKAGE_VERSION.split('.')[1]);
 
-const MESSAGE = "Wake up, Neo...";
 const ALARM_TIME_LABEL_TEXT_DEFAULT = 'not set';
 
-
 let notificationTextLabel;
-let alarmTimeLabel = new St.Label({ 
-    style_class: 'message-label', text: ALARM_TIME_LABEL_TEXT_DEFAULT 
+let alarmTimeLabel = new St.Label({
+    style_class: 'message-label', text: ALARM_TIME_LABEL_TEXT_DEFAULT
 });
 let totalTimeoutMinutes = 0;
 let sourceID = 0;
+let notificationMessageEntry = new St.Entry({ text: "Wake up, Neo..." });
 
 // We'll extend the Button class from Panel Menu so we can do some setup in
 // the init() function.
@@ -44,7 +43,10 @@ var Indicator = class Indicator extends PanelMenu.Button {
         let buttonsBox = createButtonsBox([
             '0', '+1', '+2', '+5', '+10', '+15', '+30', '+60'
         ]);
-        addWidgetsToMenu(this.menu, [alarmTimeLabel, buttonsBox]); 
+
+        addWidgetsToMenu(this.menu, [
+            alarmTimeLabel, buttonsBox, notificationMessageEntry
+        ]);
     }
 }
 
@@ -54,8 +56,8 @@ function addWidgetsToMenu(menu, widgets) {
     });
 
     function createMenuItem(item) {
-        let menuItem = new PopupMenu.PopupBaseMenuItem({ 
-            reactive: false, can_focus: false 
+        let menuItem = new PopupMenu.PopupBaseMenuItem({
+            reactive: false, can_focus: false
         });
         menuItem.actor.add(item, { expand: true });
         return menuItem;
@@ -129,9 +131,11 @@ function timeoutCallback() {
 
     function showMessage() {
         if (!notificationTextLabel) {
-            notificationTextLabel = new St.Label({ style_class: 'message-label', text: MESSAGE });
+            notificationTextLabel = new St.Label({ style_class: 'message-label'/* , text: MESSAGE */ });
             Main.uiGroup.add_actor(notificationTextLabel);
         }
+
+        notificationTextLabel.text = notificationMessageEntry.text;
 
         notificationTextLabel.opacity = 255;
 

@@ -1,6 +1,7 @@
+add: save message to preferences
+release v1.0
 ref: extension name and description
 ref: design ui
 add: three state icon
 ref: alarm time label style
 ref: notification
-add: message entry 
