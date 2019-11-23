@@ -18,19 +18,20 @@ const Tweener = imports.ui.tweener;
 const Config = imports.misc.config;
 const SHELL_MINOR = parseInt(Config.PACKAGE_VERSION.split('.')[1]);
 
-const MESSAGE = "Wake up, Neo..."
+const MESSAGE = "Wake up, Neo...";
+const ALARM_TIME_LABEL_TEXT_DEFAULT = 'not set';
 
 
 let notificationTextLabel;
-let alarmTimeLabel = new St.Label({ style_class: 'message-label' });
+let alarmTimeLabel = new St.Label({ 
+    style_class: 'message-label', text: ALARM_TIME_LABEL_TEXT_DEFAULT 
+});
 let totalTimeoutMinutes = 0;
-
 let sourceID = 0;
 
 // We'll extend the Button class from Panel Menu so we can do some setup in
 // the init() function.
 var Indicator = class Indicator extends PanelMenu.Button {
-
     _init() {
         super._init(0.0, `${Me.metadata.name} Indicator`, false);
 
@@ -43,7 +44,6 @@ var Indicator = class Indicator extends PanelMenu.Button {
         let buttonsBox = createButtonsBox([
             '0', '+1', '+2', '+5', '+10', '+15', '+30', '+60'
         ]);
-              
         addWidgetsToMenu(this.menu, [alarmTimeLabel, buttonsBox]); 
     }
 }
@@ -52,7 +52,7 @@ function addWidgetsToMenu(menu, widgets) {
     widgets.forEach(widget => {
         menu.addMenuItem(createMenuItem(widget));
     });
-    
+
     function createMenuItem(item) {
         let menuItem = new PopupMenu.PopupBaseMenuItem({ 
             reactive: false, can_focus: false 
@@ -82,18 +82,26 @@ function createButtonsBox(labels) {
 
     function buttonCallback(button) {
         let minutes = parseInt(button.label, 10);
+
         // handle press a zero button
         if (minutes === 0) {
             totalTimeoutMinutes = 0;
+            alarmTimeLabel.text = ALARM_TIME_LABEL_TEXT_DEFAULT;
         }
+
         totalTimeoutMinutes += minutes;
-        alarmTimeLabel.text = totalTimeoutMinutes.toString();
         let milliseconds = totalTimeoutMinutes * 60 * 1000;
         removeTimeout(sourceID);
         sourceID = setTimeout(timeoutCallback, milliseconds);
 
-        function setTimeout(func, milliseconds /* , ... args */) {
+        // set time to alarm label 
+        let now = new Date();
+        now.setMinutes(now.getMinutes() + totalTimeoutMinutes);
+        alarmTimeLabel.text = now.toLocaleString('en-us', {
+            hour12: false, hour: '2-digit', minute: '2-digit'
+        });
 
+        function setTimeout(func, milliseconds /* , ... args */) {
             let args = [];
             if (arguments.length > 2) {
                 args = args.slice.call(arguments, 2);
@@ -116,7 +124,7 @@ function createButtonsBox(labels) {
 
 function timeoutCallback() {
     showMessage();
-    alarmTimeLabel.text = '0';
+    alarmTimeLabel.text = ALARM_TIME_LABEL_TEXT_DEFAULT;
     totalTimeoutMinutes = 0;
 
     function showMessage() {
