@@ -1,9 +1,52 @@
+.button {
+    border-image: none;
+    background-image: none;
+    background-color: #3f3e40;
+    border-radius: 5px;
+    border-width: 1px;
+    border-color: #eeeeec;
+    box-shadow: none;
+    margin: 4px;
+    padding: 10px;  
+    /* label */
+    color: #eeeeec;
+    text-shadow: none;
+    font-size: 24px;
+}
+
+.button:active {
+    background-color: #eeeeec;
+    color: #3f3e40;
+}
+
+.label {
+    border-radius: 5px;
+    margin: 4px;
+    padding: 4px 10px 4px 10px;
+    background-color: #eeeeec;
+    color: #3f3e40;
+    font-size: 36px;
+    text-align: center;
+}
 
 .message-label {
     font-size: 64px;
     font-weight: bold;
-    color: #008f11;
-    background-color: #0d0208;
+    color: #eeeeec;
+    background-color: #3f3e40;
     border-radius: 5px;
+    border-width: 1px;
+    border-color: #eeeeec;
     padding: .5em;
+}
+
+.entry {
+    border-radius: 5px;
+    margin-left: 4px;
+    margin-right: 4px;
+    margin-top: 16px;
+    margin-bottom: 4px;
+    background-color: #eeeeec;
+    color: #3f3e40;
+    font-size: 18px;
 }

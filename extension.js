@@ -18,18 +18,10 @@ const Tweener = imports.ui.tweener;
 const Config = imports.misc.config;
 const SHELL_MINOR = parseInt(Config.PACKAGE_VERSION.split('.')[1]);
 
-const ALARM_TIME_LABEL_TEXT_DEFAULT = 'not set';
-
 let notificationTextLabel;
-let alarmTimeLabel = new St.Label({
-    style_class: 'message-label', text: ALARM_TIME_LABEL_TEXT_DEFAULT
-});
 let totalTimeoutMinutes = 0;
 let sourceID = 0;
-let notificationMessageEntry = new St.Entry({ text: "Wake up, Neo..." });
 
-// We'll extend the Button class from Panel Menu so we can do some setup in
-// the init() function.
 var Indicator = class Indicator extends PanelMenu.Button {
     _init() {
         super._init(0.0, `${Me.metadata.name} Indicator`, false);
@@ -40,102 +32,94 @@ var Indicator = class Indicator extends PanelMenu.Button {
             style_class: 'system-status-icon'
         }));
 
-        let buttonsBox = createButtonsBox([
-            '0', '+1', '+2', '+5', '+10', '+15', '+30', '+60'
-        ]);
+        this.label;
+        this.entry;
 
-        addWidgetsToMenu(this.menu, [
-            alarmTimeLabel, buttonsBox, notificationMessageEntry
-        ]);
-    }
-}
+        let menuItem = new PopupMenu.PopupBaseMenuItem({ reactive: false });
+        menuItem.actor.add(this._makeUi(), { vertical: false });
+        this.menu.addMenuItem(menuItem);
 
-function addWidgetsToMenu(menu, widgets) {
-    widgets.forEach(widget => {
-        menu.addMenuItem(createMenuItem(widget));
-    });
-
-    function createMenuItem(item) {
-        let menuItem = new PopupMenu.PopupBaseMenuItem({
-            reactive: false, can_focus: false
+        this.menu.connect('open-state-changed', () => {
+            if (totalTimeoutMinutes === 0) {
+                this._setTimeToLabel(new Date());
+            }
         });
-        menuItem.actor.add(item, { expand: true });
-        return menuItem;
     }
-}
 
-function createButtonsBox(labels) {
-    let box = new St.BoxLayout({ x_expand: true });
-    labels.forEach(label => {
-        box.add_child(createButton(label, buttonCallback));
-    });
-    return box;
+    _makeUi() {
+        this.label = new St.Label({ style_class: 'label' });
+        this.entry = new St.Entry({ style_class: 'entry', text: "Wake up, Neo..." });
 
-    function createButton(label, callback) {
-        let button = new St.Button({
-            label: label,
-            can_focus: true,
-            x_expand: true,
-            style_class: 'button',
+        let oneBox = new St.BoxLayout({ vertical: false });
+        oneBox.add(this._makeButtonsColon(['+10', '+15']));
+        oneBox.add(this._makeButtonsColon(['+30', '+60']));
+
+        let twoBox = new St.BoxLayout({ vertical: true });
+        twoBox.add(this.label);
+        twoBox.add(oneBox);
+
+        let threeBox = new St.BoxLayout({ vertical: false });
+        threeBox.add(twoBox);
+        threeBox.add(this._makeButtonsColon(['0', '+1', '+5']));
+
+        let mainBox = new St.BoxLayout({ vertical: true });
+        mainBox.add(threeBox);
+        mainBox.add(this.entry);
+
+        return mainBox;
+    }
+
+    _makeButtonsColon(labels) {
+        let box = new St.BoxLayout({ vertical: true });
+        labels.forEach(label => {
+            box.add_child(this._createButton(label));
         });
-        button.connect('clicked', callback);
+        return box;
+    }
+
+    _setTimeToLabel(time) {
+        this.label.text = time.toLocaleString('en-us', {
+            hour12: false, hour: '2-digit', minute: '2-digit'
+        });
+    }
+
+    _createButton(label) {
+        let button = new St.Button({ label: label, style_class: 'button' });
+        button.connect('clicked', () => {
+            let minutes = parseInt(button.label, 10);
+
+            // handle press a zero button
+            if (minutes === 0) {
+                totalTimeoutMinutes = 0;
+                this._showMessage();
+                this._setTimeToLabel(new Date());
+                return;
+            }
+
+            totalTimeoutMinutes += minutes;
+            let milliseconds = totalTimeoutMinutes * 60 * 1000;
+            removeTimeout(sourceID);
+            sourceID = setTimeout(() => {
+                this._showMessage();
+                totalTimeoutMinutes = 0;
+            }, milliseconds);
+
+            // set time to alarm label 
+            let time = new Date();
+            time.setMinutes(time.getMinutes() + totalTimeoutMinutes);
+            this._setTimeToLabel(time);
+        });
+
         return button;
     }
 
-    function buttonCallback(button) {
-        let minutes = parseInt(button.label, 10);
-
-        // handle press a zero button
-        if (minutes === 0) {
-            totalTimeoutMinutes = 0;
-            alarmTimeLabel.text = ALARM_TIME_LABEL_TEXT_DEFAULT;
-        }
-
-        totalTimeoutMinutes += minutes;
-        let milliseconds = totalTimeoutMinutes * 60 * 1000;
-        removeTimeout(sourceID);
-        sourceID = setTimeout(timeoutCallback, milliseconds);
-
-        // set time to alarm label 
-        let now = new Date();
-        now.setMinutes(now.getMinutes() + totalTimeoutMinutes);
-        alarmTimeLabel.text = now.toLocaleString('en-us', {
-            hour12: false, hour: '2-digit', minute: '2-digit'
-        });
-
-        function setTimeout(func, milliseconds /* , ... args */) {
-            let args = [];
-            if (arguments.length > 2) {
-                args = args.slice.call(arguments, 2);
-            }
-
-            let id = MainLoop.timeout_add(milliseconds, () => {
-                func.apply(null, args);
-                return false; // Stop repeating
-            }, null);
-
-            return id;
-        };
-
-        function removeTimeout(timeoutID) {
-            if (timeoutID == 0) return
-            MainLoop.source_remove(timeoutID);
-        }
-    }
-}
-
-function timeoutCallback() {
-    showMessage();
-    alarmTimeLabel.text = ALARM_TIME_LABEL_TEXT_DEFAULT;
-    totalTimeoutMinutes = 0;
-
-    function showMessage() {
+    _showMessage() {
         if (!notificationTextLabel) {
-            notificationTextLabel = new St.Label({ style_class: 'message-label'/* , text: MESSAGE */ });
+            notificationTextLabel = new St.Label({ style_class: 'message-label' });
             Main.uiGroup.add_actor(notificationTextLabel);
         }
 
-        notificationTextLabel.text = notificationMessageEntry.text;
+        notificationTextLabel.text = this.entry.text;
 
         notificationTextLabel.opacity = 255;
 
@@ -199,4 +183,23 @@ function disable() {
         indicator.destroy();
         indicator = null;
     }
+}
+
+function setTimeout(func, milliseconds /* , ... args */) {
+    let args = [];
+    if (arguments.length > 2) {
+        args = args.slice.call(arguments, 2);
+    }
+
+    let id = MainLoop.timeout_add(milliseconds, () => {
+        func.apply(null, args);
+        return false; // Stop repeating
+    }, null);
+
+    return id;
+};
+
+function removeTimeout(timeoutID) {
+    if (timeoutID == 0) return
+    MainLoop.source_remove(timeoutID);
 }
