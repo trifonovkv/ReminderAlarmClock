@@ -1,4 +1,4 @@
-.digit-button {
+.number-button {
     border-image: none;
     background-image: none;
     background-color: #3f3e40;
@@ -14,7 +14,7 @@
     font-size: 24px;
 }
 
-.digit-button:active {
+.number-button:active {
     background-color: #eeeeec;
     color: #3f3e40;
 }

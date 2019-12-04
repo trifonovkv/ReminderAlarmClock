@@ -18,29 +18,40 @@ const Tweener = imports.ui.tweener;
 const Config = imports.misc.config;
 const SHELL_MINOR = parseInt(Config.PACKAGE_VERSION.split('.')[1]);
 
+
 let notificationTextLabel;
 let totalTimeoutMinutes = 0;
 let sourceID = 0;
+let sandClockOffIcon = new Gio.FileIcon({
+    file: Gio.File.new_for_path(Me.dir.get_child(
+        'icons/sand-clock-off.svg').get_path())
+});
+let sandClockOnIcon = new Gio.FileIcon({
+    file: Gio.File.new_for_path(Me.dir.get_child(
+        'icons/sand-clock-on.svg').get_path())
+});
+
 
 var Indicator = class Indicator extends PanelMenu.Button {
     _init() {
         super._init(0.0, `${Me.metadata.name} Indicator`, false);
 
-        // Pick an icon
-        this.actor.add_child(new St.Icon({
-            gicon: new Gio.ThemedIcon({ name: 'face-laugh-symbolic' }),
+        this.icon = new St.Icon({
+            gicon: sandClockOffIcon,
             style_class: 'system-status-icon'
-        }));
+        });
+        this.actor.add_child(this.icon);
 
         this.timeLabel = new St.Label({ style_class: 'time-label' });
-        this.messageEntry = new St.Entry({ 
+        this.messageEntry = new St.Entry({
+            track_hover: false,
             can_focus: true,
-            style_class: 'message-entry', 
-            text: "Wake up, Neo..." 
+            style_class: 'message-entry',
+            text: "Wake up, Neo..."
         });
 
-        let menuItem = new PopupMenu.PopupBaseMenuItem({ reactive: false });
-        menuItem.actor.add(this._makeUi(), { vertical: false });
+        let menuItem = new PopupMenu.PopupBaseMenuItem({ can_focus: false, reactive: false });
+        menuItem.actor.add(this._makeUi());
         this.menu.addMenuItem(menuItem);
 
         this.menu.connect('open-state-changed', () => {
@@ -85,7 +96,7 @@ var Indicator = class Indicator extends PanelMenu.Button {
     }
 
     _createButton(label) {
-        let button = new St.Button({ label: label, style_class: 'digit-button' });
+        let button = new St.Button({ label: label, style_class: 'number-button' });
         button.connect('clicked', () => {
             let minutes = parseInt(button.label, 10);
 
@@ -97,12 +108,17 @@ var Indicator = class Indicator extends PanelMenu.Button {
                 return;
             }
 
+            this._setPanelMenuIcon(sandClockOnIcon);
+
             totalTimeoutMinutes += minutes;
             let milliseconds = totalTimeoutMinutes * 60 * 1000;
-            removeTimeout(sourceID);
+            if (totalTimeoutMinutes !== 0) {
+                removeTimeout(sourceID);
+            }
             sourceID = setTimeout(() => {
                 this._showMessage();
                 totalTimeoutMinutes = 0;
+                this._setPanelMenuIcon(sandClockOffIcon);
             }, milliseconds);
 
             // set time to alarm label 
@@ -112,6 +128,10 @@ var Indicator = class Indicator extends PanelMenu.Button {
         });
 
         return button;
+    }
+
+    _setPanelMenuIcon(icon) {
+        this.icon.gicon = icon;
     }
 
     _showMessage() {
@@ -186,6 +206,7 @@ function disable() {
     }
 }
 
+
 function setTimeout(func, milliseconds /* , ... args */) {
     let args = [];
     if (arguments.length > 2) {
@@ -199,6 +220,7 @@ function setTimeout(func, milliseconds /* , ... args */) {
 
     return id;
 };
+
 
 function removeTimeout(timeoutID) {
     if (timeoutID == 0) return

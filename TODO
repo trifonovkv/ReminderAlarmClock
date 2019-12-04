@@ -3,5 +3,5 @@ add: choose type of notification
 ref: change px to em in css
 release v1.0
 ref: extension name and description
-add: two state icon
-fix: get sourceID's before delete sourceID
+ref: default notify message
+fix: assertion 'clutter_input_focus_is_focused (focus)' failed
