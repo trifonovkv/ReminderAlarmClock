@@ -1,4 +1,4 @@
-.button {
+.digit-button {
     border-image: none;
     background-image: none;
     background-color: #3f3e40;
@@ -14,12 +14,12 @@
     font-size: 24px;
 }
 
-.button:active {
+.digit-button:active {
     background-color: #eeeeec;
     color: #3f3e40;
 }
 
-.label {
+.time-label {
     border-radius: 5px;
     margin: 4px;
     padding: 4px 10px 4px 10px;
@@ -34,19 +34,19 @@
     font-weight: bold;
     color: #eeeeec;
     background-color: #3f3e40;
+    border: solid 1px #eeeeec;
     border-radius: 5px;
-    border-width: 1px;
-    border-color: #eeeeec;
+    /* border-width: 1px;
+    border-color: #eeeeec; */
     padding: .5em;
 }
 
-.entry {
+.message-entry {
     border-radius: 5px;
-    margin-left: 4px;
-    margin-right: 4px;
-    margin-top: 16px;
-    margin-bottom: 4px;
-    background-color: #eeeeec;
-    color: #3f3e40;
+    margin: 16px 4px 4px 4px;
+    /* background-color: #eeeeec;
+    color: #3f3e40; */
     font-size: 18px;
+    /* don't allow resize entry by content */
+    max-width: 1px; 
 }

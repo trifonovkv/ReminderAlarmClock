@@ -32,8 +32,12 @@ var Indicator = class Indicator extends PanelMenu.Button {
             style_class: 'system-status-icon'
         }));
 
-        this.label;
-        this.entry;
+        this.timeLabel = new St.Label({ style_class: 'time-label' });
+        this.messageEntry = new St.Entry({ 
+            can_focus: true,
+            style_class: 'message-entry', 
+            text: "Wake up, Neo..." 
+        });
 
         let menuItem = new PopupMenu.PopupBaseMenuItem({ reactive: false });
         menuItem.actor.add(this._makeUi(), { vertical: false });
@@ -47,15 +51,12 @@ var Indicator = class Indicator extends PanelMenu.Button {
     }
 
     _makeUi() {
-        this.label = new St.Label({ style_class: 'label' });
-        this.entry = new St.Entry({ style_class: 'entry', text: "Wake up, Neo..." });
-
         let oneBox = new St.BoxLayout({ vertical: false });
         oneBox.add(this._makeButtonsColon(['+10', '+15']));
         oneBox.add(this._makeButtonsColon(['+30', '+60']));
 
         let twoBox = new St.BoxLayout({ vertical: true });
-        twoBox.add(this.label);
+        twoBox.add(this.timeLabel);
         twoBox.add(oneBox);
 
         let threeBox = new St.BoxLayout({ vertical: false });
@@ -64,7 +65,7 @@ var Indicator = class Indicator extends PanelMenu.Button {
 
         let mainBox = new St.BoxLayout({ vertical: true });
         mainBox.add(threeBox);
-        mainBox.add(this.entry);
+        mainBox.add(this.messageEntry);
 
         return mainBox;
     }
@@ -78,13 +79,13 @@ var Indicator = class Indicator extends PanelMenu.Button {
     }
 
     _setTimeToLabel(time) {
-        this.label.text = time.toLocaleString('en-us', {
+        this.timeLabel.text = time.toLocaleString('en-us', {
             hour12: false, hour: '2-digit', minute: '2-digit'
         });
     }
 
     _createButton(label) {
-        let button = new St.Button({ label: label, style_class: 'button' });
+        let button = new St.Button({ label: label, style_class: 'digit-button' });
         button.connect('clicked', () => {
             let minutes = parseInt(button.label, 10);
 
@@ -119,7 +120,7 @@ var Indicator = class Indicator extends PanelMenu.Button {
             Main.uiGroup.add_actor(notificationTextLabel);
         }
 
-        notificationTextLabel.text = this.entry.text;
+        notificationTextLabel.text = this.messageEntry.text;
 
         notificationTextLabel.opacity = 255;
 
