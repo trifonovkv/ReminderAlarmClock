@@ -112,9 +112,13 @@ var Indicator = class Indicator extends PanelMenu.Button {
 
             totalTimeoutMinutes += minutes;
             let milliseconds = totalTimeoutMinutes * 60 * 1000;
+            // round down to minutes
+            milliseconds -= new Date().getSeconds() * 1000;
+            
             if (totalTimeoutMinutes !== 0) {
                 removeTimeout(sourceID);
             }
+
             sourceID = setTimeout(() => {
                 this._showMessage();
                 totalTimeoutMinutes = 0;

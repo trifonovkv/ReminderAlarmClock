@@ -44,6 +44,7 @@
 .message-entry {
     border-radius: 5px;
     margin: 16px 4px 4px 4px;
+    border: solid 1px #eeeeec;
     /* background-color: #eeeeec;
     color: #3f3e40; */
     font-size: 18px;
