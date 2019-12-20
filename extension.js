@@ -1,7 +1,6 @@
 'use strict';
 
 const Gio = imports.gi.Gio;
-const GLib = imports.gi.GLib;
 const GObject = imports.gi.GObject;
 const St = imports.gi.St;
 
@@ -14,35 +13,66 @@ const PopupMenu = imports.ui.popupMenu;
 const MainLoop = imports.mainloop;
 const Tweener = imports.ui.tweener;
 
-// For compatibility checks, as described above
 const Config = imports.misc.config;
 const SHELL_MINOR = parseInt(Config.PACKAGE_VERSION.split('.')[1]);
 
+const Icon = {
+    ON: 'icons/sand-clock-on.svg',
+    OFF: 'icons/sand-clock-off.svg',
+};
+
+
+var Timer = {
+    delayMinutes: 0,
+    callback: function () { },
+    timeoutID: 0,
+
+    get countDownDate() {
+        let milliseconds = this.delayMinutes * 60 * 1000;
+        return new Date(new Date().getTime() + milliseconds);
+    },
+
+    start() {
+        //  // Find the distance between now and the count down date
+        let distance = this.countDownDate.setSeconds(0) - new Date();
+        let delay = distance < 0 ? 0 : distance;
+
+        Timer.clearTimeout();
+        this.timeoutID = MainLoop.timeout_add(delay, () => {
+            this.callback();
+            this.reset();
+            return false; // Stop repeating
+        }, null);
+    },
+
+    reset() {
+        this.clearTimeout();
+        this.delayMinutes = 0;
+    },
+
+    clearTimeout() {
+        if (this.timeoutID != 0) {
+            MainLoop.source_remove(this.timeoutID);
+            this.timeoutID = 0;
+        }
+    }
+};
 
 let notificationTextLabel;
-let totalTimeoutMinutes = 0;
-let sourceID = 0;
-let sandClockOffIcon = new Gio.FileIcon({
-    file: Gio.File.new_for_path(Me.dir.get_child(
-        'icons/sand-clock-off.svg').get_path())
-});
-let sandClockOnIcon = new Gio.FileIcon({
-    file: Gio.File.new_for_path(Me.dir.get_child(
-        'icons/sand-clock-on.svg').get_path())
-});
-
 
 var Indicator = class Indicator extends PanelMenu.Button {
     _init() {
         super._init(0.0, `${Me.metadata.name} Indicator`, false);
 
-        this.icon = new St.Icon({
-            gicon: sandClockOffIcon,
-            style_class: 'system-status-icon'
-        });
+        this.icon = new St.Icon({ style_class: 'system-status-icon' });
         this.actor.add_child(this.icon);
+        this._setPanelMenuIcon(Icon.OFF);
 
         this.timeLabel = new St.Label({ style_class: 'time-label' });
+
+        // to prevent an empty label after sleep mode
+        this._setTimeToLabel(new Date());
+
         this.messageEntry = new St.Entry({
             track_hover: false,
             can_focus: true,
@@ -55,10 +85,15 @@ var Indicator = class Indicator extends PanelMenu.Button {
         this.menu.addMenuItem(menuItem);
 
         this.menu.connect('open-state-changed', () => {
-            if (totalTimeoutMinutes === 0) {
+            if (Timer.delayMinutes == 0) {
                 this._setTimeToLabel(new Date());
             }
         });
+
+        Timer.callback = () => {
+            this._setPanelMenuIcon(Icon.OFF);
+            this._showMessage();
+        }
     }
 
     _makeUi() {
@@ -98,44 +133,26 @@ var Indicator = class Indicator extends PanelMenu.Button {
     _createButton(label) {
         let button = new St.Button({ label: label, style_class: 'number-button' });
         button.connect('clicked', () => {
-            let minutes = parseInt(button.label, 10);
-
-            // handle press a zero button
-            if (minutes === 0) {
-                totalTimeoutMinutes = 0;
-                this._showMessage();
-                this._setTimeToLabel(new Date());
-                return;
+            // reset timeout when pressed zero button
+            if (button.label == '0') {
+                Timer.reset();
+            } else {
+                Timer.delayMinutes += parseInt(button.label, 10);
             }
 
-            this._setPanelMenuIcon(sandClockOnIcon);
+            Timer.start();
 
-            totalTimeoutMinutes += minutes;
-            let milliseconds = totalTimeoutMinutes * 60 * 1000;
-            // round down to minutes
-            milliseconds -= new Date().getSeconds() * 1000;
-            
-            if (totalTimeoutMinutes !== 0) {
-                removeTimeout(sourceID);
-            }
-
-            sourceID = setTimeout(() => {
-                this._showMessage();
-                totalTimeoutMinutes = 0;
-                this._setPanelMenuIcon(sandClockOffIcon);
-            }, milliseconds);
-
-            // set time to alarm label 
-            let time = new Date();
-            time.setMinutes(time.getMinutes() + totalTimeoutMinutes);
-            this._setTimeToLabel(time);
+            this._setTimeToLabel(Timer.countDownDate);
+            this._setPanelMenuIcon(Icon.ON);
         });
 
         return button;
     }
 
     _setPanelMenuIcon(icon) {
-        this.icon.gicon = icon;
+        this.icon.gicon = new Gio.FileIcon({
+            file: Gio.File.new_for_path(Me.dir.get_child(icon).get_path())
+        });
     }
 
     _showMessage() {
@@ -208,25 +225,5 @@ function disable() {
         indicator.destroy();
         indicator = null;
     }
-}
-
-
-function setTimeout(func, milliseconds /* , ... args */) {
-    let args = [];
-    if (arguments.length > 2) {
-        args = args.slice.call(arguments, 2);
-    }
-
-    let id = MainLoop.timeout_add(milliseconds, () => {
-        func.apply(null, args);
-        return false; // Stop repeating
-    }, null);
-
-    return id;
-};
-
-
-function removeTimeout(timeoutID) {
-    if (timeoutID == 0) return
-    MainLoop.source_remove(timeoutID);
+    Timer.reset();
 }
