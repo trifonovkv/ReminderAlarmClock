@@ -1,9 +1,3 @@
 add: save message to preferences
-add: choose type of notification
 ref: change px to em in css
 release v1.0
-ref: extension name and description
-- timer, reminder
-- Reminder Alarm Clock
-- Reminder Clock
-ref: default notify message

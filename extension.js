@@ -77,7 +77,7 @@ var Indicator = class Indicator extends PanelMenu.Button {
             track_hover: false,
             can_focus: true,
             style_class: 'message-entry',
-            text: "Wake up, Neo..."
+            text: "Knock knock"
         });
 
         let menuItem = new PopupMenu.PopupBaseMenuItem({ can_focus: false, reactive: false });
