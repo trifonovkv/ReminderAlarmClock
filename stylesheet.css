@@ -36,8 +36,6 @@
     background-color: #3f3e40;
     border: solid 1px #eeeeec;
     border-radius: 5px;
-    /* border-width: 1px;
-    border-color: #eeeeec; */
     padding: .5em;
 }
 
@@ -45,8 +43,6 @@
     border-radius: 5px;
     margin: 16px 4px 4px 4px;
     border: solid 1px #eeeeec;
-    /* background-color: #eeeeec;
-    color: #3f3e40; */
     font-size: 18px;
     /* don't allow resize entry by content */
     max-width: 1px; 
