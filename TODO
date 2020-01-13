@@ -1,3 +1,5 @@
 add: save message to preferences
 ref: change px to em in css
-release v1.0
+add: audio alarm 
+add: show remaining time in taskbar
+add: configurable presets
