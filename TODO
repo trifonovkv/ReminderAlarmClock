@@ -5,3 +5,4 @@ add: show remaining time in taskbar
 add: configurable presets
 add: a button to close reminder window
 add: the "full minutes" feature
+fix: "Error: Type name Indicator already registerd"
