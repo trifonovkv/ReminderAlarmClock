@@ -17,8 +17,8 @@ const Config = imports.misc.config;
 const SHELL_MINOR = parseInt(Config.PACKAGE_VERSION.split('.')[1]);
 
 const Icon = {
-    ON: 'icons/sand-clock-on.svg',
-    OFF: 'icons/sand-clock-off.svg',
+    ON: 'icons/sand-clock-on-symbolic.svg',
+    OFF: 'icons/sand-clock-off-symbolic.svg',
 };
 
 
