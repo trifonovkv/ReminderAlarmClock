@@ -60,9 +60,9 @@ var Timer = {
 
 let notificationTextLabel;
 
-var Indicator = class Indicator extends PanelMenu.Button {
+var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
     _init() {
-        super._init(0.0, `${Me.metadata.name} Indicator`, false);
+        super._init(0.0, `${Me.metadata.name} ReminderAlarmClock`, false);
 
         this.icon = new St.Icon({ style_class: 'system-status-icon' });
         this.actor.add_child(this.icon);
@@ -188,9 +188,9 @@ var Indicator = class Indicator extends PanelMenu.Button {
 
 // Compatibility with gnome-shell >= 3.32
 if (SHELL_MINOR > 30) {
-    Indicator = GObject.registerClass(
-        { GTypeName: 'Indicator' },
-        Indicator
+    ReminderAlarmClock = GObject.registerClass(
+        { GTypeName: 'ReminderAlarmClock' },
+        ReminderAlarmClock
     );
 }
 
@@ -207,12 +207,12 @@ function init() {
 function enable() {
     log(`enabling ${Me.metadata.name} version ${Me.metadata.version}`);
 
-    indicator = new Indicator();
+    indicator = new ReminderAlarmClock();
 
     // The `main` import is an example of file that is mostly live instances of
     // objects, rather than reusable code. `Main.panel` is the actual panel you
     // see at the top of the screen.
-    Main.panel.addToStatusArea(`${Me.metadata.name} Indicator`, indicator);
+    Main.panel.addToStatusArea(`${Me.metadata.name} ReminderAlarmClock`, indicator);
 }
 
 
