@@ -4,5 +4,8 @@
     <key name="drop-seconds" type="b">
       <default>false</default>
     </key>
+    <key name="message" type="s">
+      <default>"Knock knock"</default>
+    </key>
   </schema>
 </schemalist>

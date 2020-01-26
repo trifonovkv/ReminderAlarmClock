@@ -1,7 +1,9 @@
 'use strict';
 
 const Gio = imports.gi.Gio;
+const GLib = imports.gi.GLib;
 const GObject = imports.gi.GObject;
+
 const St = imports.gi.St;
 
 const ExtensionUtils = imports.misc.extensionUtils;
@@ -12,6 +14,8 @@ const PanelMenu = imports.ui.panelMenu;
 const PopupMenu = imports.ui.popupMenu;
 const MainLoop = imports.mainloop;
 const Tweener = imports.ui.tweener;
+
+const Gtk = imports.gi.Gtk;
 
 const Config = imports.misc.config;
 const SHELL_MINOR = parseInt(Config.PACKAGE_VERSION.split('.')[1]);
@@ -81,28 +85,6 @@ var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
         // to prevent an empty label after sleep mode
         this._setTimeToLabel(new Date());
 
-        this.messageEntry = new St.Entry({
-            track_hover: false,
-            can_focus: true,
-            style_class: 'message-entry',
-            text: "Knock knock"
-        });
-
-        let menuItem = new PopupMenu.PopupBaseMenuItem({ can_focus: false, reactive: false });
-        menuItem.actor.add(this._makeUi());
-        this.menu.addMenuItem(menuItem);
-
-        this.menu.connect('open-state-changed', () => {
-            if (Timer.delayMinutes == 0) {
-                this._setTimeToLabel(new Date());
-            }
-        });
-
-        Timer.callback = () => {
-            this._setPanelMenuIcon(Icon.OFF);
-            this._showMessage();
-        }
-
         // Get the GSchema source so we can lookup our settings
         let gschema = Gio.SettingsSchemaSource.new_from_directory(
             Me.dir.get_child('schemas').get_path(),
@@ -113,6 +95,29 @@ var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
         this.settings = new Gio.Settings({
             settings_schema: gschema.lookup('org.gnome.shell.extensions.reminderalarmclock', true)
         });
+
+        this.messageEntry = new St.Entry({
+            track_hover: false,
+            can_focus: true,
+            style_class: 'message-entry',
+            text: this.settings.get_value('message').deep_unpack()
+        });
+
+        let menuItem = new PopupMenu.PopupBaseMenuItem({ can_focus: false, reactive: false });
+        menuItem.actor.add(this._makeUi());
+        this.menu.addMenuItem(menuItem);
+
+        this.menu.connect('open-state-changed', () => {
+            if (Timer.delayMinutes == 0) {
+                this._setTimeToLabel(new Date());
+            }
+            this.settings.set_value('message', new GLib.Variant('s', this.messageEntry.text))
+        });
+
+        Timer.callback = () => {
+            this._setPanelMenuIcon(Icon.OFF);
+            this._showMessage();
+        }
 
         // Watch the settings for changes
         this._onDropSecondsChangedId = this.settings.connect(
