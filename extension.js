@@ -26,6 +26,7 @@ var Timer = {
     delayMinutes: 0,
     callback: function () { },
     timeoutID: 0,
+    isDropSeconds: false,
 
     get countDownDate() {
         let milliseconds = this.delayMinutes * 60 * 1000;
@@ -33,8 +34,15 @@ var Timer = {
     },
 
     start() {
-        //  // Find the distance between now and the count down date
-        let distance = this.countDownDate.setSeconds(0) - new Date();
+        // Find the distance between now and the count down date
+        // let isDropSeconds = this.settings.get_value('drop-seconds');
+        let distance 
+        if (this.isDropSeconds) {
+            distance = this.countDownDate.setSeconds(0) - new Date();
+        } 
+        else {
+            distance = this.countDownDate - new Date();
+        }
         let delay = distance < 0 ? 0 : distance;
 
         Timer.clearTimeout();
@@ -94,6 +102,25 @@ var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
             this._setPanelMenuIcon(Icon.OFF);
             this._showMessage();
         }
+
+        // Get the GSchema source so we can lookup our settings
+        let gschema = Gio.SettingsSchemaSource.new_from_directory(
+            Me.dir.get_child('schemas').get_path(),
+            Gio.SettingsSchemaSource.get_default(),
+            false
+        );
+
+        this.settings = new Gio.Settings({
+            settings_schema: gschema.lookup('org.gnome.shell.extensions.reminderalarmclock', true)
+        });
+
+        // Watch the settings for changes
+        this._onDropSecondsChangedId = this.settings.connect(
+            'changed::drop-seconds',
+            this._onDropSecondsChanged.bind(this)
+        );
+
+        Timer.isDropSeconds = this.settings.get_value('drop-seconds').deep_unpack();
     }
 
     _makeUi() {
@@ -184,6 +211,10 @@ var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
             notificationTextLabel = null;
         }
     }
+
+    _onDropSecondsChanged(settings, key) {
+        Timer.isDropSeconds = this.settings.get_value('drop-seconds').deep_unpack();
+    }
 }
 
 // Compatibility with gnome-shell >= 3.32
@@ -194,9 +225,9 @@ if (SHELL_MINOR > 30) {
     );
 }
 
-// We're going to declare `indicator` in the scope of the whole script so it can
+// We're going to declare `reminderAlarmClock` in the scope of the whole script so it can
 // be accessed in both `enable()` and `disable()`
-var indicator = null;
+var reminderAlarmClock = null;
 
 
 function init() {
@@ -207,12 +238,12 @@ function init() {
 function enable() {
     log(`enabling ${Me.metadata.name} version ${Me.metadata.version}`);
 
-    indicator = new ReminderAlarmClock();
+    reminderAlarmClock = new ReminderAlarmClock();
 
     // The `main` import is an example of file that is mostly live instances of
     // objects, rather than reusable code. `Main.panel` is the actual panel you
     // see at the top of the screen.
-    Main.panel.addToStatusArea(`${Me.metadata.name} ReminderAlarmClock`, indicator);
+    Main.panel.addToStatusArea(`${Me.metadata.name} ReminderAlarmClock`, reminderAlarmClock);
 }
 
 
@@ -221,9 +252,9 @@ function disable() {
 
     // REMINDER: It's required for extensions to clean up after themselves when
     // they are disabled. This is required for approval during review!
-    if (indicator !== null) {
-        indicator.destroy();
-        indicator = null;
+    if (reminderAlarmClock !== null) {
+        reminderAlarmClock.destroy();
+        reminderAlarmClock = null;
     }
     Timer.reset();
 }
