@@ -1,6 +1,7 @@
 'use strict';
 
 const Gio = imports.gi.Gio;
+const Gst = imports.gi.Gst; Gst.init(null);
 const GLib = imports.gi.GLib;
 const GObject = imports.gi.GObject;
 
@@ -14,8 +15,6 @@ const PanelMenu = imports.ui.panelMenu;
 const PopupMenu = imports.ui.popupMenu;
 const MainLoop = imports.mainloop;
 const Tweener = imports.ui.tweener;
-
-const Gtk = imports.gi.Gtk;
 
 const Config = imports.misc.config;
 const SHELL_MINOR = parseInt(Config.PACKAGE_VERSION.split('.')[1]);
@@ -125,7 +124,14 @@ var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
             this._onDropSecondsChanged.bind(this)
         );
 
+        this._onPlaySoundChangedId = this.settings.connect(
+            'changed::play-sound',
+            this._onPlaySoundChanged.bind(this)
+        );
+
         Timer.isDropSeconds = this.settings.get_value('drop-seconds').deep_unpack();
+
+        this.isPlaySound = this.settings.get_value('play-sound').deep_unpack();
     }
 
     _makeUi() {
@@ -211,14 +217,22 @@ var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
             }
         );
 
+        if(this.isPlaySound) {
+            new Player().play(this.settings.get_string('sound-file-path'));
+        }
+
         function hideMessage() {
             Main.uiGroup.remove_actor(notificationTextLabel);
             notificationTextLabel = null;
         }
     }
 
-    _onDropSecondsChanged(settings, key) {
+    _onDropSecondsChanged() {
         Timer.isDropSeconds = this.settings.get_value('drop-seconds').deep_unpack();
+    }
+
+    _onPlaySoundChanged() {
+        this.isPlaySound = this.settings.get_value('play-sound').deep_unpack();
     }
 }
 
@@ -262,4 +276,15 @@ function disable() {
         reminderAlarmClock = null;
     }
     Timer.reset();
+}
+
+var Player = class Player {
+    constructor() {
+        this.playbin = Gst.ElementFactory.make("playbin", "player");
+    }
+
+    play(uri) {
+        this.playbin.set_property("uri", uri);
+        this.playbin.set_state(Gst.State.PLAYING);
+    }
 }

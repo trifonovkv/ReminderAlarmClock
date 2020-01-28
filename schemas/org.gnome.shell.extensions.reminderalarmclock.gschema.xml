@@ -7,5 +7,11 @@
     <key name="message" type="s">
       <default>"Knock knock"</default>
     </key>
+    <key name="play-sound" type="b">
+      <default>false</default>
+    </key>
+     <key name="sound-file-path" type="s">
+      <default>"file:///usr/share/sounds/gnome/default/alerts/glass.ogg"</default>
+    </key>
   </schema>
 </schemalist>

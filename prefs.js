@@ -2,6 +2,7 @@
 
 const Gio = imports.gi.Gio;
 const Gtk = imports.gi.Gtk;
+const GLib = imports.gi.GLib;
 
 const ExtensionUtils = imports.misc.extensionUtils;
 const Me = ExtensionUtils.getCurrentExtension();
@@ -42,29 +43,58 @@ function buildPrefsWidget() {
     });
     prefsWidget.attach(title, 0, 0, 2, 1);
 
-
-    // Create a label & switch for `drop-seconds`
-    let toggleLabel = new Gtk.Label({
+    let dropSecondsLabel = new Gtk.Label({
         label: 'Drop seconds:',
         halign: Gtk.Align.START,
         visible: true
     });
-    prefsWidget.attach(toggleLabel, 0, 1, 1, 1);
-
-    let toggle = new Gtk.Switch({
-        active: this.settings.get_boolean ('drop-seconds'),
+    prefsWidget.attach(dropSecondsLabel, 0, 1, 1, 1);
+    
+    let dropSecondsSwitch = new Gtk.Switch({
+        active: this.settings.get_boolean('drop-seconds'),
         halign: Gtk.Align.END,
         visible: true
     });
-    prefsWidget.attach(toggle, 1, 1, 1, 1);
+    prefsWidget.attach(dropSecondsSwitch, 1, 1, 1, 1);
 
-    // Bind the switch to the `drop-seconds` key
     this.settings.bind(
         'drop-seconds',
-        toggle,
+        dropSecondsSwitch,
         'active',
         Gio.SettingsBindFlags.DEFAULT
     );
+
+    let playSoundLabel = new Gtk.Label({
+        label: 'Play sound:',
+        halign: Gtk.Align.START,
+        visible: true
+    });
+    prefsWidget.attach(playSoundLabel, 0, 2, 1, 1);
+
+    let playSoundSwitch = new Gtk.Switch({
+        active: this.settings.get_boolean('play-sound'),
+        halign: Gtk.Align.END,
+        visible: true
+    });
+    prefsWidget.attach(playSoundSwitch, 1, 2, 1, 1);
+
+    this.settings.bind(
+        'play-sound',
+        playSoundSwitch,
+        'active',
+        Gio.SettingsBindFlags.DEFAULT
+    );
+
+    let soundChooser = new Gtk.FileChooserButton({
+        visible: true
+    });
+
+    soundChooser.set_uri(this.settings.get_string('sound-file-path'));
+    soundChooser.connect('file-set', (widget) => {
+        this.settings.set_string('sound-file-path', widget.get_uri());
+    });
+
+    prefsWidget.attach(soundChooser, 1, 3, 1, 1);
 
     // Return our widget which will be added to the window
     return prefsWidget;
