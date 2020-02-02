@@ -19,6 +19,8 @@ const Tweener = imports.ui.tweener;
 const Config = imports.misc.config;
 const SHELL_MINOR = parseInt(Config.PACKAGE_VERSION.split('.')[1]);
 
+const SOUND_PLAYER = Me.imports.sound_player;
+
 const Icon = {
     ON: 'icons/sand-clock-on-symbolic.svg',
     OFF: 'icons/sand-clock-off-symbolic.svg',
@@ -39,10 +41,10 @@ var Timer = {
     start() {
         // Find the distance between now and the count down date
         // let isDropSeconds = this.settings.get_value('drop-seconds');
-        let distance 
+        let distance
         if (this.isDropSeconds) {
             distance = this.countDownDate.setSeconds(0) - new Date();
-        } 
+        }
         else {
             distance = this.countDownDate - new Date();
         }
@@ -115,6 +117,7 @@ var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
 
         Timer.callback = () => {
             this._setPanelMenuIcon(Icon.OFF);
+            if (this.isPlaySound) this._playSound();
             this._showMessage();
         }
 
@@ -217,14 +220,14 @@ var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
             }
         );
 
-        if(this.isPlaySound) {
-            new Player().play(this.settings.get_string('sound-file-path'));
-        }
-
         function hideMessage() {
             Main.uiGroup.remove_actor(notificationTextLabel);
             notificationTextLabel = null;
         }
+    }
+
+    _playSound() {
+        new SOUND_PLAYER.SoundPlayer().play(this.settings.get_string('sound-file-path'));
     }
 
     _onDropSecondsChanged() {
@@ -276,15 +279,4 @@ function disable() {
         reminderAlarmClock = null;
     }
     Timer.reset();
-}
-
-var Player = class Player {
-    constructor() {
-        this.playbin = Gst.ElementFactory.make("playbin", "player");
-    }
-
-    play(uri) {
-        this.playbin.set_property("uri", uri);
-        this.playbin.set_state(Gst.State.PLAYING);
-    }
 }
