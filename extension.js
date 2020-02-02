@@ -13,7 +13,7 @@ const Main = imports.ui.main;
 const PanelMenu = imports.ui.panelMenu;
 
 const PopupMenu = imports.ui.popupMenu;
-const MainLoop = imports.mainloop;
+const Mainloop = imports.mainloop;
 const Tweener = imports.ui.tweener;
 
 const Config = imports.misc.config;
@@ -51,7 +51,7 @@ var Timer = {
         let delay = distance < 0 ? 0 : distance;
 
         Timer.clearTimeout();
-        this.timeoutID = MainLoop.timeout_add(delay, () => {
+        this.timeoutID = Mainloop.timeout_add(delay, () => {
             this.callback();
             this.reset();
             return false; // Stop repeating
@@ -65,7 +65,7 @@ var Timer = {
 
     clearTimeout() {
         if (this.timeoutID != 0) {
-            MainLoop.source_remove(this.timeoutID);
+            Mainloop.source_remove(this.timeoutID);
             this.timeoutID = 0;
         }
     }
@@ -105,7 +105,8 @@ var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
         });
 
         let menuItem = new PopupMenu.PopupBaseMenuItem({ can_focus: false, reactive: false });
-        menuItem.actor.add(this._makeUi());
+        let presents = this.settings.get_value('presents').deep_unpack()
+        menuItem.actor.add(this._makeUi(this._toLabels(presents)));
         this.menu.addMenuItem(menuItem);
 
         this.menu.connect('open-state-changed', () => {
@@ -121,7 +122,6 @@ var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
             this._showMessage();
         }
 
-        // Watch the settings for changes
         this._onDropSecondsChangedId = this.settings.connect(
             'changed::drop-seconds',
             this._onDropSecondsChanged.bind(this)
@@ -137,10 +137,10 @@ var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
         this.isPlaySound = this.settings.get_value('play-sound').deep_unpack();
     }
 
-    _makeUi() {
+    _makeUi(labels) {
         let oneBox = new St.BoxLayout({ vertical: false });
-        oneBox.add(this._makeButtonsColon(['+10', '+15']));
-        oneBox.add(this._makeButtonsColon(['+30', '+60']));
+        oneBox.add(this._makeButtonsColon([labels[2], labels[3]]));
+        oneBox.add(this._makeButtonsColon([labels[4], labels[5]]));
 
         let twoBox = new St.BoxLayout({ vertical: true });
         twoBox.add(this.timeLabel);
@@ -148,7 +148,7 @@ var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
 
         let threeBox = new St.BoxLayout({ vertical: false });
         threeBox.add(twoBox);
-        threeBox.add(this._makeButtonsColon(['0', '+1', '+5']));
+        threeBox.add(this._makeButtonsColon(['0', labels[0], labels[1]]));
 
         let mainBox = new St.BoxLayout({ vertical: true });
         mainBox.add(threeBox);
@@ -178,7 +178,9 @@ var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
             if (button.label == '0') {
                 Timer.reset();
             } else {
-                Timer.delayMinutes += parseInt(button.label, 10);
+                let parsed = parseInt(button.label, 10);
+                if (isNaN(parsed)) parsed = 0;
+                Timer.delayMinutes += parsed;
             }
 
             Timer.start();
@@ -236,6 +238,15 @@ var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
 
     _onPlaySoundChanged() {
         this.isPlaySound = this.settings.get_value('play-sound').deep_unpack();
+    }
+
+    _toLabels(presents) {
+        var r = new Array();
+        presents = presents.replace(/\s\s+/g, ' ').trim();
+        presents.split(' ').forEach((item) => {
+            r.push('+' + item)
+        });
+        return r;
     }
 }
 

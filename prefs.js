@@ -43,6 +43,7 @@ function buildPrefsWidget() {
     });
     prefsWidget.attach(title, 0, 0, 2, 1);
 
+
     let dropSecondsLabel = new Gtk.Label({
         label: 'Drop seconds:',
         halign: Gtk.Align.START,
@@ -63,6 +64,7 @@ function buildPrefsWidget() {
         'active',
         Gio.SettingsBindFlags.DEFAULT
     );
+
 
     let playSoundLabel = new Gtk.Label({
         label: 'Play sound:',
@@ -95,6 +97,29 @@ function buildPrefsWidget() {
     });
 
     prefsWidget.attach(soundChooser, 1, 3, 1, 1);
+
+
+    let presentsLabel = new Gtk.Label({
+        label: 'Presents <small>(extension restart needed)</small>:',
+        halign: Gtk.Align.START,
+        use_markup: true,
+        visible: true
+    });
+    prefsWidget.attach(presentsLabel, 0, 4, 1, 1);
+    
+    let presentsEntry = new Gtk.Entry({
+        text: this.settings.get_string('presents'),
+        halign: Gtk.Align.END,
+        visible: true
+    });
+    prefsWidget.attach(presentsEntry, 1, 4, 1, 1);
+
+    this.settings.bind(
+        'presents',
+        presentsEntry,
+        'text',
+        Gio.SettingsBindFlags.DEFAULT
+    );
 
     // Return our widget which will be added to the window
     return prefsWidget;

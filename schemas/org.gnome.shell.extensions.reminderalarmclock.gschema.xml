@@ -13,5 +13,8 @@
      <key name="sound-file-path" type="s">
       <default>"file:///usr/share/sounds/gnome/default/alerts/glass.ogg"</default>
     </key>
+    <key name="presents" type="s">
+      <default>"1 5 10 15 30 60"</default>
+    </key>
   </schema>
 </schemalist>
