@@ -34,9 +34,38 @@
     font-weight: bold;
     color: #eeeeec;
     background-color: #3f3e40;
+    padding: .3em;
+}
+
+.message-label-with-border {
+    font-size: 64px;
+    font-weight: bold;
+    color: #eeeeec;
+    background-color: #3f3e40;
     border: solid 1px #eeeeec;
-    border-radius: 5px;
-    padding: .5em;
+    border-radius: .3em;
+    padding: .3em;
+}
+
+.message-close-button {
+    font-size: 16px;
+    color: #3f3e40;
+    background-color: #eeeeec;
+    border-radius: .3em;
+    margin: .3em;
+}
+
+.message-close-button:active {
+    background-color: #3f3e40;
+}
+
+.message-layout {
+    font-size: 64px;
+    font-weight: bold;
+    background-color: #3f3e40;
+    border: solid 1px #eeeeec;
+    border-radius: .3em;
+    padding: .3em;
 }
 
 .message-entry {

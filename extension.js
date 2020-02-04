@@ -1,25 +1,22 @@
 'use strict';
 
-const Gio = imports.gi.Gio;
-const Gst = imports.gi.Gst; Gst.init(null);
-const GLib = imports.gi.GLib;
-const GObject = imports.gi.GObject;
-
-const St = imports.gi.St;
-
-const ExtensionUtils = imports.misc.extensionUtils;
-const Me = ExtensionUtils.getCurrentExtension();
+const { Gio, GLib, GObject, St } = imports.gi;
 const Main = imports.ui.main;
 const PanelMenu = imports.ui.panelMenu;
-
 const PopupMenu = imports.ui.popupMenu;
-const Mainloop = imports.mainloop;
 const Tweener = imports.ui.tweener;
 
 const Config = imports.misc.config;
+const ExtensionUtils = imports.misc.extensionUtils;
+
+const Mainloop = imports.mainloop;
+
+const Me = ExtensionUtils.getCurrentExtension();
+const SOUND_PLAYER = Me.imports.sound_player;
+
 const SHELL_MINOR = parseInt(Config.PACKAGE_VERSION.split('.')[1]);
 
-const SOUND_PLAYER = Me.imports.sound_player;
+
 
 const Icon = {
     ON: 'icons/sand-clock-on-symbolic.svg',
@@ -118,8 +115,15 @@ var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
 
         Timer.callback = () => {
             this._setPanelMenuIcon(Icon.OFF);
-            if (this.isPlaySound) this._playSound();
-            this._showMessage();
+            if (this.isPlaySound) {
+                this._playSound();
+            }
+            if (this.isAutoCloseReminderWindow) {
+                this._showReminder();
+            }
+            else {
+                this._showReminderWithCloseButton();
+            }
         }
 
         this._onDropSecondsChangedId = this.settings.connect(
@@ -132,9 +136,14 @@ var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
             this._onPlaySoundChanged.bind(this)
         );
 
-        Timer.isDropSeconds = this.settings.get_value('drop-seconds').deep_unpack();
-
-        this.isPlaySound = this.settings.get_value('play-sound').deep_unpack();
+        this._onAutoCloseReminderWindowChangedId = this.settings.connect(
+            'changed::auto-close-reminder-window',
+            this._onAutoCloseReminderWindowChanged.bind(this)
+        );
+        
+        this._onDropSecondsChanged();
+        this._onPlaySoundChanged();
+        this._onAutoCloseReminderWindowChanged();
     }
 
     _makeUi(labels) {
@@ -198,9 +207,9 @@ var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
         });
     }
 
-    _showMessage() {
+    _showReminder() {
         if (!notificationTextLabel) {
-            notificationTextLabel = new St.Label({ style_class: 'message-label' });
+            notificationTextLabel = new St.Label({ style_class: 'message-label-with-border' });
             Main.uiGroup.add_actor(notificationTextLabel);
         }
 
@@ -228,6 +237,28 @@ var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
         }
     }
 
+    _showReminderWithCloseButton() {
+        let label = new St.Label({ text: this.messageEntry.text, style_class: 'message-label' });
+        let button = new St.Button({ label: 'Close', style_class: 'message-close-button' });
+        let notification = new St.BoxLayout({ vertical: true, style_class: 'message-layout' });
+
+        button.connect('clicked', () => {
+            Main.uiGroup.remove_actor(notification);
+            Main.popModal(notification);
+        });
+        notification.add(label);
+        notification.add(button);
+
+        Main.uiGroup.add_actor(notification);
+
+        let monitor = Main.layoutManager.primaryMonitor;
+
+        notification.set_position(monitor.x + Math.floor(monitor.width / 2 - notification.width / 2),
+            monitor.y + Math.floor(monitor.height / 2 - notification.height / 2));
+
+        Main.pushModal(notification);
+    }
+
     _playSound() {
         new SOUND_PLAYER.SoundPlayer().play(this.settings.get_string('sound-file-path'));
     }
@@ -238,6 +269,10 @@ var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
 
     _onPlaySoundChanged() {
         this.isPlaySound = this.settings.get_value('play-sound').deep_unpack();
+    }
+
+    _onAutoCloseReminderWindowChanged() {
+        this.isAutoCloseReminderWindow = this.settings.get_value('auto-close-reminder-window').deep_unpack();
     }
 
     _toLabels(presents) {

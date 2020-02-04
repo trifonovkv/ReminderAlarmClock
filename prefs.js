@@ -121,6 +121,28 @@ function buildPrefsWidget() {
         Gio.SettingsBindFlags.DEFAULT
     );
 
+
+    let autoCloseReminderWindowLabel = new Gtk.Label({
+        label: 'Auto hide reminder window:',
+        halign: Gtk.Align.START,
+        visible: true
+    });
+    prefsWidget.attach(autoCloseReminderWindowLabel, 0, 5, 1, 1);
+    
+    let autoCloseReminderWindowSwitch = new Gtk.Switch({
+        active: this.settings.get_boolean('auto-close-reminder-window'),
+        halign: Gtk.Align.END,
+        visible: true
+    });
+    prefsWidget.attach(autoCloseReminderWindowSwitch, 1, 5, 1, 1);
+
+    this.settings.bind(
+        'auto-close-reminder-window',
+        autoCloseReminderWindowSwitch,
+        'active',
+        Gio.SettingsBindFlags.DEFAULT
+    );
+
     // Return our widget which will be added to the window
     return prefsWidget;
 }

@@ -16,5 +16,8 @@
     <key name="presents" type="s">
       <default>"1 5 10 15 30 60"</default>
     </key>
+    <key name="auto-close-reminder-window" type="b">
+      <default>false</default>
+    </key>
   </schema>
 </schemalist>
