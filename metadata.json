@@ -1,7 +1,9 @@
 {
     "name": "Reminder Alarm Clock", 
     "description": "The reminder alarm clock will remind you of an important event at the appointed time.", 
-    "uuid": "reminder_alarm_clock@trifonovkv.gmail.com", 
+    "uuid": "reminder_alarm_clock@trifonovkv.gmail.com",
+    "url": "https://github.com/trifonovkv/ReminderAlarmClock",
+
     "shell-version": ["3.32.1"], 
     "version": 1
 }

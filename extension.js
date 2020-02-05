@@ -5,10 +5,8 @@ const Main = imports.ui.main;
 const PanelMenu = imports.ui.panelMenu;
 const PopupMenu = imports.ui.popupMenu;
 const Tweener = imports.ui.tweener;
-
 const Config = imports.misc.config;
 const ExtensionUtils = imports.misc.extensionUtils;
-
 const Mainloop = imports.mainloop;
 
 const Me = ExtensionUtils.getCurrentExtension();
@@ -16,6 +14,10 @@ const SOUND_PLAYER = Me.imports.sound_player;
 
 const SHELL_MINOR = parseInt(Config.PACKAGE_VERSION.split('.')[1]);
 
+const Gettext = imports.gettext;
+Gettext.textdomain('reminderAlarmClock');
+Gettext.bindtextdomain('reminderAlarmClock', Me.dir.get_child('locale').get_path());
+const _ = Gettext.gettext;
 
 
 const Icon = {
@@ -37,7 +39,6 @@ var Timer = {
 
     start() {
         // Find the distance between now and the count down date
-        // let isDropSeconds = this.settings.get_value('drop-seconds');
         let distance
         if (this.isDropSeconds) {
             distance = this.countDownDate.setSeconds(0) - new Date();
@@ -239,7 +240,7 @@ var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
 
     _showReminderWithCloseButton() {
         let label = new St.Label({ text: this.messageEntry.text, style_class: 'message-label' });
-        let button = new St.Button({ label: 'Close', style_class: 'message-close-button' });
+        let button = new St.Button({ label: _('Close'), style_class: 'message-close-button' });
         let notification = new St.BoxLayout({ vertical: true, style_class: 'message-layout' });
 
         button.connect('clicked', () => {

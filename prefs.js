@@ -1,11 +1,14 @@
 'use strict';
 
-const Gio = imports.gi.Gio;
-const Gtk = imports.gi.Gtk;
-const GLib = imports.gi.GLib;
+const { Gio, GLib, Gtk } = imports.gi;
 
 const ExtensionUtils = imports.misc.extensionUtils;
 const Me = ExtensionUtils.getCurrentExtension();
+
+const Gettext = imports.gettext;
+Gettext.textdomain('reminderAlarmClock');
+Gettext.bindtextdomain('reminderAlarmClock', Me.dir.get_child('locale').get_path());
+const _ = Gettext.gettext;
 
 
 function init() {
@@ -33,9 +36,8 @@ function buildPrefsWidget() {
         hexpand: true
     });
 
-    // Add a simple title and add it to the prefsWidget
     let title = new Gtk.Label({
-        label: '<b>' + Me.metadata.name + ' Extension Preferences</b>',
+        label: '<b>' + Me.metadata.name + ' ' + _('Extension Preferences') + '</b>',
         halign: Gtk.Align.CENTER,
         hexpand: true,
         use_markup: true,
@@ -45,7 +47,7 @@ function buildPrefsWidget() {
 
 
     let dropSecondsLabel = new Gtk.Label({
-        label: 'Drop seconds:',
+        label: _('Drop seconds:'),
         halign: Gtk.Align.START,
         visible: true
     });
@@ -67,7 +69,7 @@ function buildPrefsWidget() {
 
 
     let playSoundLabel = new Gtk.Label({
-        label: 'Play sound:',
+        label: _('Play sound:'),
         halign: Gtk.Align.START,
         visible: true
     });
@@ -100,7 +102,7 @@ function buildPrefsWidget() {
 
 
     let presentsLabel = new Gtk.Label({
-        label: 'Presents <small>(extension restart needed)</small>:',
+        label: _('Presents <small>(extension restart needed)</small>:'),
         halign: Gtk.Align.START,
         use_markup: true,
         visible: true
@@ -123,7 +125,7 @@ function buildPrefsWidget() {
 
 
     let autoCloseReminderWindowLabel = new Gtk.Label({
-        label: 'Auto hide reminder window:',
+        label: _('Auto hide reminder window:'),
         halign: Gtk.Align.START,
         visible: true
     });
