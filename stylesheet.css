@@ -43,7 +43,7 @@
     color: #eeeeec;
     background-color: #3f3e40;
     border: solid 1px #eeeeec;
-    border-radius: .3em;
+    border-radius: 5px;
     padding: .3em;
 }
 
@@ -51,8 +51,8 @@
     font-size: 16px;
     color: #3f3e40;
     background-color: #eeeeec;
-    border-radius: .3em;
-    margin: .3em;
+    border-radius: 5px;
+    margin: .2em;
 }
 
 .message-close-button:active {
@@ -64,8 +64,8 @@
     font-weight: bold;
     background-color: #3f3e40;
     border: solid 1px #eeeeec;
-    border-radius: .3em;
-    padding: .3em;
+    border-radius: 5px;
+    padding: .2em;
 }
 
 .message-entry {
