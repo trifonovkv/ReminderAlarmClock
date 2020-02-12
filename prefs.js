@@ -145,6 +145,19 @@ function buildPrefsWidget() {
         Gio.SettingsBindFlags.DEFAULT
     );
 
+
+    let showTestNotificationButton = new Gtk.Button({
+        label: _('Show test notification'),
+        halign: Gtk.Align.CENTER,
+        visible: true
+    });
+
+    showTestNotificationButton.connect('clicked', () => {
+        this.settings.set_boolean('show-test-notification', true);
+    });
+
+    prefsWidget.attach(showTestNotificationButton, 0, 6, 2, 1);
+
     // Return our widget which will be added to the window
     return prefsWidget;
 }

@@ -19,5 +19,8 @@
     <key name="auto-close-reminder-window" type="b">
       <default>false</default>
     </key>
+    <key name="show-test-notification" type="b">
+      <default>false</default>
+    </key>
   </schema>
 </schemalist>

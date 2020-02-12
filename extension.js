@@ -25,6 +25,8 @@ const Icon = {
     OFF: 'icons/sand-clock-off-symbolic.svg',
 };
 
+const ResetLabel = _('R');
+
 
 var Timer = {
     delayMinutes: 0,
@@ -141,7 +143,12 @@ var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
             'changed::auto-close-reminder-window',
             this._onAutoCloseReminderWindowChanged.bind(this)
         );
-        
+
+        this._onShowTestNotificationChangedId = this.settings.connect(
+            'changed::show-test-notification',
+            this._onShowTestNotificationChanged.bind(this)
+        );
+
         this._onDropSecondsChanged();
         this._onPlaySoundChanged();
         this._onAutoCloseReminderWindowChanged();
@@ -158,7 +165,7 @@ var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
 
         let threeBox = new St.BoxLayout({ vertical: false });
         threeBox.add(twoBox);
-        threeBox.add(this._makeButtonsColon(['0', labels[0], labels[1]]));
+        threeBox.add(this._makeButtonsColon([ResetLabel, labels[0], labels[1]]));
 
         let mainBox = new St.BoxLayout({ vertical: true });
         mainBox.add(threeBox);
@@ -185,8 +192,11 @@ var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
         let button = new St.Button({ label: label, style_class: 'number-button' });
         button.connect('clicked', () => {
             // reset timeout when pressed zero button
-            if (button.label == '0') {
+            if (button.label == ResetLabel) {
                 Timer.reset();
+                this._setTimeToLabel(Timer.countDownDate);
+                this._setPanelMenuIcon(Icon.OFF);
+                return;
             } else {
                 let parsed = parseInt(button.label, 10);
                 if (isNaN(parsed)) parsed = 0;
@@ -274,6 +284,10 @@ var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
 
     _onAutoCloseReminderWindowChanged() {
         this.isAutoCloseReminderWindow = this.settings.get_value('auto-close-reminder-window').deep_unpack();
+    }
+
+    _onShowTestNotificationChanged() {
+        Timer.callback();
     }
 
     _toLabels(presents) {
