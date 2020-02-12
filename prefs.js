@@ -47,7 +47,7 @@ function buildPrefsWidget() {
 
 
     let dropSecondsLabel = new Gtk.Label({
-        label: _('Drop seconds:'),
+        label: _('Round to minutes:'),
         halign: Gtk.Align.START,
         visible: true
     });

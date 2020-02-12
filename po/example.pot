@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-02-04 22:38+0500\n"
+"POT-Creation-Date: 2020-02-12 09:57+0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -22,7 +22,7 @@ msgid "Extension Preferences"
 msgstr ""
 
 #: prefs.js:50
-msgid "Drop seconds:"
+msgid "Round to minutes:"
 msgstr ""
 
 #: prefs.js:72
