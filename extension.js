@@ -1,16 +1,16 @@
 'use strict';
 
-const { Gio, GLib, GObject, St } = imports.gi;
+const { Gio, GLib, GObject, St, Clutter } = imports.gi;
 const Main = imports.ui.main;
 const PanelMenu = imports.ui.panelMenu;
 const PopupMenu = imports.ui.popupMenu;
 const Tweener = imports.ui.tweener;
 const Config = imports.misc.config;
 const ExtensionUtils = imports.misc.extensionUtils;
-const Mainloop = imports.mainloop;
 
 const Me = ExtensionUtils.getCurrentExtension();
 const SOUND_PLAYER = Me.imports.sound_player;
+const TIMER = Me.imports.timer;
 
 const SHELL_MINOR = parseInt(Config.PACKAGE_VERSION.split('.')[1]);
 
@@ -24,65 +24,26 @@ const Icon = {
     ON: 'icons/sand-clock-on-symbolic.svg',
     OFF: 'icons/sand-clock-off-symbolic.svg',
 };
-
 const ResetLabel = _('R');
-
-
-var Timer = {
-    delayMinutes: 0,
-    callback: function () { },
-    timeoutID: 0,
-    isDropSeconds: false,
-
-    get countDownDate() {
-        let milliseconds = this.delayMinutes * 60 * 1000;
-        return new Date(new Date().getTime() + milliseconds);
-    },
-
-    start() {
-        // Find the distance between now and the count down date
-        let distance
-        if (this.isDropSeconds) {
-            distance = this.countDownDate.setSeconds(0) - new Date();
-        }
-        else {
-            distance = this.countDownDate - new Date();
-        }
-        let delay = distance < 0 ? 0 : distance;
-
-        Timer.clearTimeout();
-        this.timeoutID = Mainloop.timeout_add(delay, () => {
-            this.callback();
-            this.reset();
-            return false; // Stop repeating
-        }, null);
-    },
-
-    reset() {
-        this.clearTimeout();
-        this.delayMinutes = 0;
-    },
-
-    clearTimeout() {
-        if (this.timeoutID != 0) {
-            Mainloop.source_remove(this.timeoutID);
-            this.timeoutID = 0;
-        }
-    }
-};
-
 let notificationTextLabel;
+
+
+Number.prototype.pad = function (size) {
+    var s = String(this);
+    while (s.length < (size || 2)) { s = "0" + s; }
+    return s;
+}
+
 
 var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
     _init() {
         super._init(0.0, `${Me.metadata.name} ReminderAlarmClock`, false);
 
         this.icon = new St.Icon({ style_class: 'system-status-icon' });
-        this.actor.add_child(this.icon);
-        this._setPanelMenuIcon(Icon.OFF);
+        this.label = new St.Label({ text: ':00', y_align: Clutter.ActorAlign.CENTER });
+        this.insert_child_at_index(this.icon, 0);
 
         this.timeLabel = new St.Label({ style_class: 'time-label' });
-
         // to prevent an empty label after sleep mode
         this._setTimeToLabel(new Date());
 
@@ -104,20 +65,44 @@ var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
             text: this.settings.get_value('message').deep_unpack()
         });
 
+        this.timer = new TIMER.Timer();
+
+        function muntesCallback(label, timer) {
+            return function () {
+                label.text = (Math.floor(timer.getLeftSeconds() / 60) + 1) + ':';
+            }
+        }
+
+        function secondsCallback(label, timer) {
+            return function () {
+                let letfSeconds = timer.getLeftSeconds();
+                if (letfSeconds > 0) { // don't show zero
+                    label.text = ':' + letfSeconds.pad();
+                }
+            }
+        }
+
+        this.timer.setRepeater(
+            muntesCallback(this.label, this.timer),
+            secondsCallback(this.label, this.timer),
+            function () { }
+        );
+
         let menuItem = new PopupMenu.PopupBaseMenuItem({ can_focus: false, reactive: false });
         let presents = this.settings.get_value('presents').deep_unpack()
         menuItem.actor.add(this._makeUi(this._toLabels(presents)));
         this.menu.addMenuItem(menuItem);
 
         this.menu.connect('open-state-changed', () => {
-            if (Timer.delayMinutes == 0) {
+            if (this.timer.delayMinutes == 0) {
                 this._setTimeToLabel(new Date());
             }
             this.settings.set_value('message', new GLib.Variant('s', this.messageEntry.text))
         });
 
-        Timer.callback = () => {
-            this._setPanelMenuIcon(Icon.OFF);
+
+        this.timer.callback = () => {
+            this._updateTaskbar(this.isShowRemainingTimeInTaskbar, false);
             if (this.isPlaySound) {
                 this._playSound();
             }
@@ -129,6 +114,7 @@ var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
             }
         }
 
+        // TODO del all id's
         this._onDropSecondsChangedId = this.settings.connect(
             'changed::drop-seconds',
             this._onDropSecondsChanged.bind(this)
@@ -149,9 +135,15 @@ var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
             this._onShowTestNotificationChanged.bind(this)
         );
 
+        this._onShowRemainingTimeInTaskbarChangedId = this.settings.connect(
+            'changed::show-remaining-time-in-taskbar',
+            this._onShowRemainingTimeInTaskbarChanged.bind(this)
+        );
+
         this._onDropSecondsChanged();
         this._onPlaySoundChanged();
         this._onAutoCloseReminderWindowChanged();
+        this._onShowRemainingTimeInTaskbarChanged();
     }
 
     _makeUi(labels) {
@@ -193,20 +185,20 @@ var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
         button.connect('clicked', () => {
             // reset timeout when pressed zero button
             if (button.label == ResetLabel) {
-                Timer.reset();
-                this._setTimeToLabel(Timer.countDownDate);
-                this._setPanelMenuIcon(Icon.OFF);
+                this.timer.reset();
+                this._setTimeToLabel(this.timer.countDownDate);
+                this._updateTaskbar(this.isShowRemainingTimeInTaskbar, this.timer.isSet);
                 return;
             } else {
                 let parsed = parseInt(button.label, 10);
                 if (isNaN(parsed)) parsed = 0;
-                Timer.delayMinutes += parsed;
+                this.timer.delayMinutes += parsed;
             }
 
-            Timer.start();
+            this.timer.start();
 
-            this._setTimeToLabel(Timer.countDownDate);
-            this._setPanelMenuIcon(Icon.ON);
+            this._setTimeToLabel(this.timer.countDownDate);
+            this._updateTaskbar(this.isShowRemainingTimeInTaskbar, this.timer.isSet);
         });
 
         return button;
@@ -274,8 +266,27 @@ var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
         new SOUND_PLAYER.SoundPlayer().play(this.settings.get_string('sound-file-path'));
     }
 
+    _updateTaskbar(isShowRemainingTimeInTaskbar, isOn) {
+        // TODO old_child != new_child' failed
+        if (isShowRemainingTimeInTaskbar && isOn) {
+            this.replace_child(this.get_first_child(), this.label);
+        }
+        if (!isShowRemainingTimeInTaskbar && isOn) {
+            this.replace_child(this.get_first_child(), this.icon);
+            this._setPanelMenuIcon(Icon.ON);
+        }
+        if (isShowRemainingTimeInTaskbar && !isOn) {
+            this.replace_child(this.get_first_child(), this.icon);
+            this._setPanelMenuIcon(Icon.OFF);
+        }
+        if (!isShowRemainingTimeInTaskbar && !isOn) {
+            this.replace_child(this.get_first_child(), this.icon);
+            this._setPanelMenuIcon(Icon.OFF);
+        }
+    }
+
     _onDropSecondsChanged() {
-        Timer.isDropSeconds = this.settings.get_value('drop-seconds').deep_unpack();
+        this.timer.isDropSeconds = this.settings.get_value('drop-seconds').deep_unpack();
     }
 
     _onPlaySoundChanged() {
@@ -287,7 +298,13 @@ var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
     }
 
     _onShowTestNotificationChanged() {
-        Timer.callback();
+        // TODO fix when timer is active this switch taskbar icon to off 
+        this.timer.callback();
+    }
+
+    _onShowRemainingTimeInTaskbarChanged() {
+        this.isShowRemainingTimeInTaskbar = this.settings.get_value('show-remaining-time-in-taskbar').deep_unpack();
+        this._updateTaskbar(this.isShowRemainingTimeInTaskbar, this.timer.isSet);
     }
 
     _toLabels(presents) {
@@ -297,6 +314,11 @@ var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
             r.push('+' + item)
         });
         return r;
+    }
+
+    destroy() {
+        this.timer.reset();
+        super.destroy();
     }
 }
 
@@ -339,5 +361,4 @@ function disable() {
         reminderAlarmClock.destroy();
         reminderAlarmClock = null;
     }
-    Timer.reset();
 }

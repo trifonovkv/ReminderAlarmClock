@@ -14,6 +14,8 @@ const _ = Gettext.gettext;
 function init() {
 }
 
+// TODO group all switches
+
 function buildPrefsWidget() {
 
     // Copy the same GSettings code from `extension.js`
@@ -146,6 +148,29 @@ function buildPrefsWidget() {
     );
 
 
+    // TODO update translate
+    let showRemainingTimeInTaskbarLabel = new Gtk.Label({
+        label: _('Show remaining time in taskbar:'),
+        halign: Gtk.Align.START,
+        visible: true
+    });
+    prefsWidget.attach(showRemainingTimeInTaskbarLabel, 0, 6, 1, 1);
+    
+    let showRemainingTimeInTaskbarSwitch = new Gtk.Switch({
+        active: this.settings.get_boolean('show-remaining-time-in-taskbar'),
+        halign: Gtk.Align.END,
+        visible: true
+    });
+    prefsWidget.attach(showRemainingTimeInTaskbarSwitch, 1, 6, 1, 1);
+
+    this.settings.bind(
+        'show-remaining-time-in-taskbar',
+        showRemainingTimeInTaskbarSwitch,
+        'active',
+        Gio.SettingsBindFlags.DEFAULT
+    );
+
+
     let showTestNotificationButton = new Gtk.Button({
         label: _('Show test notification'),
         halign: Gtk.Align.CENTER,
@@ -156,7 +181,7 @@ function buildPrefsWidget() {
         this.settings.set_boolean('show-test-notification', true);
     });
 
-    prefsWidget.attach(showTestNotificationButton, 0, 6, 2, 1);
+    prefsWidget.attach(showTestNotificationButton, 0, 7, 2, 1);
 
     // Return our widget which will be added to the window
     return prefsWidget;
