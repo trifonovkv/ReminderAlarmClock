@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-02-12 14:47+0500\n"
+"POT-Creation-Date: 2020-02-22 16:28+0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,30 +17,34 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: extension.js:28
+#: extension.js:27
 msgid "R"
 msgstr ""
 
-#: prefs.js:40
+#: prefs.js:41
 msgid "Extension Preferences"
 msgstr ""
 
-#: prefs.js:50
+#: prefs.js:51
 msgid "Round to minutes:"
 msgstr ""
 
-#: prefs.js:72
-msgid "Play sound:"
-msgstr ""
-
-#: prefs.js:105
-msgid "Presents <small>(extension restart needed)</small>:"
-msgstr ""
-
-#: prefs.js:128
+#: prefs.js:73
 msgid "Auto hide reminder window:"
 msgstr ""
 
+#: prefs.js:95
+msgid "Show remaining time in taskbar:"
+msgstr ""
+
+#: prefs.js:117
+msgid "Play sound:"
+msgstr ""
+
 #: prefs.js:150
+msgid "Presents <small>(extension restart needed)</small>:"
+msgstr ""
+
+#: prefs.js:173
 msgid "Show test notification"
 msgstr ""

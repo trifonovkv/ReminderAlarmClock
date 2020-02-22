@@ -14,7 +14,6 @@ const _ = Gettext.gettext;
 function init() {
 }
 
-// TODO group all switches
 
 function buildPrefsWidget() {
 
@@ -70,19 +69,63 @@ function buildPrefsWidget() {
     );
 
 
+    let autoCloseReminderWindowLabel = new Gtk.Label({
+        label: _('Auto hide reminder window:'),
+        halign: Gtk.Align.START,
+        visible: true
+    });
+    prefsWidget.attach(autoCloseReminderWindowLabel, 0, 2, 1, 1);
+    
+    let autoCloseReminderWindowSwitch = new Gtk.Switch({
+        active: this.settings.get_boolean('auto-close-reminder-window'),
+        halign: Gtk.Align.END,
+        visible: true
+    });
+    prefsWidget.attach(autoCloseReminderWindowSwitch, 1, 2, 1, 1);
+
+    this.settings.bind(
+        'auto-close-reminder-window',
+        autoCloseReminderWindowSwitch,
+        'active',
+        Gio.SettingsBindFlags.DEFAULT
+    );
+
+
+    let showRemainingTimeInTaskbarLabel = new Gtk.Label({
+        label: _('Show remaining time in taskbar:'),
+        halign: Gtk.Align.START,
+        visible: true
+    });
+    prefsWidget.attach(showRemainingTimeInTaskbarLabel, 0, 3, 1, 1);
+    
+    let showRemainingTimeInTaskbarSwitch = new Gtk.Switch({
+        active: this.settings.get_boolean('show-remaining-time-in-taskbar'),
+        halign: Gtk.Align.END,
+        visible: true
+    });
+    prefsWidget.attach(showRemainingTimeInTaskbarSwitch, 1, 3, 1, 1);
+
+    this.settings.bind(
+        'show-remaining-time-in-taskbar',
+        showRemainingTimeInTaskbarSwitch,
+        'active',
+        Gio.SettingsBindFlags.DEFAULT
+    );
+
+
     let playSoundLabel = new Gtk.Label({
         label: _('Play sound:'),
         halign: Gtk.Align.START,
         visible: true
     });
-    prefsWidget.attach(playSoundLabel, 0, 2, 1, 1);
+    prefsWidget.attach(playSoundLabel, 0, 4, 1, 1);
 
     let playSoundSwitch = new Gtk.Switch({
         active: this.settings.get_boolean('play-sound'),
         halign: Gtk.Align.END,
         visible: true
     });
-    prefsWidget.attach(playSoundSwitch, 1, 2, 1, 1);
+    prefsWidget.attach(playSoundSwitch, 1, 4, 1, 1);
 
     this.settings.bind(
         'play-sound',
@@ -100,7 +143,7 @@ function buildPrefsWidget() {
         this.settings.set_string('sound-file-path', widget.get_uri());
     });
 
-    prefsWidget.attach(soundChooser, 1, 3, 1, 1);
+    prefsWidget.attach(soundChooser, 1, 5, 1, 1);
 
 
     let presentsLabel = new Gtk.Label({
@@ -109,64 +152,19 @@ function buildPrefsWidget() {
         use_markup: true,
         visible: true
     });
-    prefsWidget.attach(presentsLabel, 0, 4, 1, 1);
+    prefsWidget.attach(presentsLabel, 0, 6, 1, 1);
     
     let presentsEntry = new Gtk.Entry({
         text: this.settings.get_string('presents'),
         halign: Gtk.Align.END,
         visible: true
     });
-    prefsWidget.attach(presentsEntry, 1, 4, 1, 1);
+    prefsWidget.attach(presentsEntry, 1, 6, 1, 1);
 
     this.settings.bind(
         'presents',
         presentsEntry,
         'text',
-        Gio.SettingsBindFlags.DEFAULT
-    );
-
-
-    let autoCloseReminderWindowLabel = new Gtk.Label({
-        label: _('Auto hide reminder window:'),
-        halign: Gtk.Align.START,
-        visible: true
-    });
-    prefsWidget.attach(autoCloseReminderWindowLabel, 0, 5, 1, 1);
-    
-    let autoCloseReminderWindowSwitch = new Gtk.Switch({
-        active: this.settings.get_boolean('auto-close-reminder-window'),
-        halign: Gtk.Align.END,
-        visible: true
-    });
-    prefsWidget.attach(autoCloseReminderWindowSwitch, 1, 5, 1, 1);
-
-    this.settings.bind(
-        'auto-close-reminder-window',
-        autoCloseReminderWindowSwitch,
-        'active',
-        Gio.SettingsBindFlags.DEFAULT
-    );
-
-
-    // TODO update translate
-    let showRemainingTimeInTaskbarLabel = new Gtk.Label({
-        label: _('Show remaining time in taskbar:'),
-        halign: Gtk.Align.START,
-        visible: true
-    });
-    prefsWidget.attach(showRemainingTimeInTaskbarLabel, 0, 6, 1, 1);
-    
-    let showRemainingTimeInTaskbarSwitch = new Gtk.Switch({
-        active: this.settings.get_boolean('show-remaining-time-in-taskbar'),
-        halign: Gtk.Align.END,
-        visible: true
-    });
-    prefsWidget.attach(showRemainingTimeInTaskbarSwitch, 1, 6, 1, 1);
-
-    this.settings.bind(
-        'show-remaining-time-in-taskbar',
-        showRemainingTimeInTaskbarSwitch,
-        'active',
         Gio.SettingsBindFlags.DEFAULT
     );
 
