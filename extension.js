@@ -10,7 +10,7 @@ const ExtensionUtils = imports.misc.extensionUtils;
 
 const Me = ExtensionUtils.getCurrentExtension();
 const SOUND_PLAYER = Me.imports.sound_player;
-const TIMER = Me.imports.timer;
+const ALARM_CLOCK = Me.imports.alarm_clock;
 
 const SHELL_MINOR = parseInt(Config.PACKAGE_VERSION.split('.')[1]);
 
@@ -25,7 +25,6 @@ const Icon = {
     OFF: 'icons/sand-clock-off-symbolic.svg',
 };
 const ResetLabel = _('R');
-let notificationTextLabel;
 
 
 Number.prototype.pad = function (size) {
@@ -44,8 +43,6 @@ var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
         this.insert_child_at_index(this.icon, 0);
 
         this.timeLabel = new St.Label({ style_class: 'time-label' });
-        // to prevent an empty label after sleep mode
-        this._setTimeToLabel(new Date());
 
         // Get the GSchema source so we can lookup our settings
         let gschema = Gio.SettingsSchemaSource.new_from_directory(
@@ -65,28 +62,19 @@ var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
             text: this.settings.get_value('message').deep_unpack()
         });
 
-        this.timer = new TIMER.Timer();
-
-        function muntesCallback(label, timer) {
-            return function () {
-                label.text = (Math.floor(timer.getLeftSeconds() / 60) + 1) + ':';
+        this.alarmClock = new ALARM_CLOCK.AlarmClock(
+            (hm) => {
+                this.label.text = Math.round(hm / 2) + ':';
+            },
+            (s) => { this.label.text = ':' + s.pad(); },
+            () => {
+                this._updateTaskbar(false);
+                this._showReminder();
             }
-        }
-
-        function secondsCallback(label, timer) {
-            return function () {
-                let letfSeconds = timer.getLeftSeconds();
-                if (letfSeconds > 0) { // don't show zero
-                    label.text = ':' + letfSeconds.pad();
-                }
-            }
-        }
-
-        this.timer.setRepeater(
-            muntesCallback(this.label, this.timer),
-            secondsCallback(this.label, this.timer),
-            function () { }
         );
+
+        // to prevent an empty label after sleep mode
+        this._updateTimeLabel();
 
         let menuItem = new PopupMenu.PopupBaseMenuItem({ can_focus: false, reactive: false });
         let presents = this.settings.get_value('presents').deep_unpack()
@@ -94,48 +82,31 @@ var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
         this.menu.addMenuItem(menuItem);
 
         this.menu.connect('open-state-changed', () => {
-            if (this.timer.delayMinutes == 0) {
-                this._setTimeToLabel(new Date());
-            }
+            this._updateTimeLabel();
             this.settings.set_value('message', new GLib.Variant('s', this.messageEntry.text))
         });
 
-
-        this.timer.callback = () => {
-            this._updateTaskbar(this.isShowRemainingTimeInTaskbar, false);
-            if (this.isPlaySound) {
-                this._playSound();
-            }
-            if (this.isAutoCloseReminderWindow) {
-                this._showReminder();
-            }
-            else {
-                this._showReminderWithCloseButton();
-            }
-        }
-
-        // TODO del all id's
-        this._onDropSecondsChangedId = this.settings.connect(
+        this.settings.connect(
             'changed::drop-seconds',
             this._onDropSecondsChanged.bind(this)
         );
 
-        this._onPlaySoundChangedId = this.settings.connect(
+        this.settings.connect(
             'changed::play-sound',
             this._onPlaySoundChanged.bind(this)
         );
 
-        this._onAutoCloseReminderWindowChangedId = this.settings.connect(
+        this.settings.connect(
             'changed::auto-close-reminder-window',
             this._onAutoCloseReminderWindowChanged.bind(this)
         );
 
-        this._onShowTestNotificationChangedId = this.settings.connect(
+        this.settings.connect(
             'changed::show-test-notification',
-            this._onShowTestNotificationChanged.bind(this)
+            this._onShowTestReminderChanged.bind(this)
         );
 
-        this._onShowRemainingTimeInTaskbarChangedId = this.settings.connect(
+        this.settings.connect(
             'changed::show-remaining-time-in-taskbar',
             this._onShowRemainingTimeInTaskbarChanged.bind(this)
         );
@@ -174,8 +145,9 @@ var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
         return box;
     }
 
-    _setTimeToLabel(time) {
-        this.timeLabel.text = time.toLocaleString('en-us', {
+    _updateTimeLabel() {
+        let date = this.alarmClock.getEndDate();
+        this.timeLabel.text = date.toLocaleString('en-us', {
             hour12: false, hour: '2-digit', minute: '2-digit'
         });
     }
@@ -183,22 +155,20 @@ var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
     _createButton(label) {
         let button = new St.Button({ label: label, style_class: 'number-button' });
         button.connect('clicked', () => {
-            // reset timeout when pressed zero button
             if (button.label == ResetLabel) {
-                this.timer.reset();
-                this._setTimeToLabel(this.timer.countDownDate);
-                this._updateTaskbar(this.isShowRemainingTimeInTaskbar, this.timer.isSet);
-                return;
-            } else {
-                let parsed = parseInt(button.label, 10);
-                if (isNaN(parsed)) parsed = 0;
-                this.timer.delayMinutes += parsed;
+                this.alarmClock.reset();
+                this._updateTimeLabel();
             }
+            else {
+                let integer = parseInt(button.label, 10);
+                let minutes = isNaN(integer) ? 0 : integer;
 
-            this.timer.start();
-
-            this._setTimeToLabel(this.timer.countDownDate);
-            this._updateTaskbar(this.isShowRemainingTimeInTaskbar, this.timer.isSet);
+                this.alarmClock.isOnlyAlarm = !this.isShowRemainingTimeInTaskbar;
+                this.alarmClock.add(minutes);
+                this.alarmClock.start();
+                this._updateTimeLabel();
+            }
+            this._updateTaskbar(this.alarmClock.isRunning());
         });
 
         return button;
@@ -211,82 +181,80 @@ var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
     }
 
     _showReminder() {
-        if (!notificationTextLabel) {
-            notificationTextLabel = new St.Label({ style_class: 'message-label-with-border' });
-            Main.uiGroup.add_actor(notificationTextLabel);
+        if (this.isPlaySound) {
+            this._playSound();
         }
+        if (this.isAutoCloseReminderWindow) {
+            this._showReminderWithoutCloseButton();
+        }
+        else {
+            this._showReminderWithCloseButton();
+        }
+    }
 
-        notificationTextLabel.text = this.messageEntry.text;
+    _showReminderWithoutCloseButton() {
+        let reminder = new St.Label({ style_class: 'message-label-with-border' });
+        Main.uiGroup.add_actor(reminder);
+        reminder.text = this.messageEntry.text;
+        reminder.opacity = 255;
+        this._setReminderPosition(reminder);
 
-        notificationTextLabel.opacity = 255;
-
-        let monitor = Main.layoutManager.primaryMonitor;
-
-        notificationTextLabel.set_position(monitor.x + Math.floor(monitor.width / 2 - notificationTextLabel.width / 2),
-            monitor.y + Math.floor(monitor.height / 2 - notificationTextLabel.height / 2));
-
-        Tweener.addTween(notificationTextLabel,
+        Tweener.addTween(reminder,
             {
                 opacity: 0,
                 time: 5,
                 transition: 'easeInQuint',
-                onComplete: hideMessage
+                onComplete: () => {
+                    Main.uiGroup.remove_actor(reminder);
+                }
             }
         );
-
-        function hideMessage() {
-            Main.uiGroup.remove_actor(notificationTextLabel);
-            notificationTextLabel = null;
-        }
     }
 
     _showReminderWithCloseButton() {
         let label = new St.Label({ text: this.messageEntry.text, style_class: 'message-label' });
         let button = new St.Button({ label: _('Close'), style_class: 'message-close-button' });
-        let notification = new St.BoxLayout({ vertical: true, style_class: 'message-layout' });
-
+        let reminder = new St.BoxLayout({ vertical: true, style_class: 'message-layout' });
         button.connect('clicked', () => {
-            Main.uiGroup.remove_actor(notification);
-            Main.popModal(notification);
+            Main.uiGroup.remove_actor(reminder);
+            Main.popModal(reminder);
         });
-        notification.add(label);
-        notification.add(button);
+        reminder.add(label);
+        reminder.add(button);
+        Main.uiGroup.add_actor(reminder);
+        this._setReminderPosition(reminder);
+        Main.pushModal(reminder);
+    }
 
-        Main.uiGroup.add_actor(notification);
-
+    _setReminderPosition(reminder) {
         let monitor = Main.layoutManager.primaryMonitor;
 
-        notification.set_position(monitor.x + Math.floor(monitor.width / 2 - notification.width / 2),
-            monitor.y + Math.floor(monitor.height / 2 - notification.height / 2));
-
-        Main.pushModal(notification);
+        reminder.set_position(
+            monitor.x + Math.floor(monitor.width / 2 - reminder.width / 2),
+            monitor.y + Math.floor(monitor.height / 2 - reminder.height / 2));
     }
 
     _playSound() {
         new SOUND_PLAYER.SoundPlayer().play(this.settings.get_string('sound-file-path'));
     }
 
-    _updateTaskbar(isShowRemainingTimeInTaskbar, isOn) {
-        // TODO old_child != new_child' failed
-        if (isShowRemainingTimeInTaskbar && isOn) {
-            this.replace_child(this.get_first_child(), this.label);
+    _updateTaskbar(isOn) {
+        let oldChild = this.get_first_child();
+        let newChild = this.icon;
+        if (this.isShowRemainingTimeInTaskbar && isOn) {
+            newChild = this.label;
         }
-        if (!isShowRemainingTimeInTaskbar && isOn) {
-            this.replace_child(this.get_first_child(), this.icon);
-            this._setPanelMenuIcon(Icon.ON);
+        else {
+            this._setPanelMenuIcon(isOn ? Icon.ON : Icon.OFF);
         }
-        if (isShowRemainingTimeInTaskbar && !isOn) {
-            this.replace_child(this.get_first_child(), this.icon);
-            this._setPanelMenuIcon(Icon.OFF);
-        }
-        if (!isShowRemainingTimeInTaskbar && !isOn) {
-            this.replace_child(this.get_first_child(), this.icon);
-            this._setPanelMenuIcon(Icon.OFF);
+
+        if (oldChild != newChild) {
+            this.replace_child(oldChild, newChild);
         }
     }
 
     _onDropSecondsChanged() {
-        this.timer.isDropSeconds = this.settings.get_value('drop-seconds').deep_unpack();
+        this.alarmClock.isDropSeconds = this.settings.get_value('drop-seconds').deep_unpack();
     }
 
     _onPlaySoundChanged() {
@@ -297,14 +265,13 @@ var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
         this.isAutoCloseReminderWindow = this.settings.get_value('auto-close-reminder-window').deep_unpack();
     }
 
-    _onShowTestNotificationChanged() {
-        // TODO fix when timer is active this switch taskbar icon to off 
-        this.timer.callback();
+    _onShowTestReminderChanged() {
+        this._showReminder();
     }
 
     _onShowRemainingTimeInTaskbarChanged() {
         this.isShowRemainingTimeInTaskbar = this.settings.get_value('show-remaining-time-in-taskbar').deep_unpack();
-        this._updateTaskbar(this.isShowRemainingTimeInTaskbar, this.timer.isSet);
+        this._updateTaskbar(this.alarmClock.isRunning());
     }
 
     _toLabels(presents) {
@@ -317,7 +284,7 @@ var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
     }
 
     destroy() {
-        this.timer.reset();
+        this.alarmClock.reset();
         super.destroy();
     }
 }
