@@ -304,6 +304,7 @@ var reminderAlarmClock = null;
 
 function init() {
     log(`initializing ${Me.metadata.name} version ${Me.metadata.version}`);
+    ExtensionUtils.initTranslations('reminder_alarm_clock');
 }
 
 
