@@ -6,8 +6,8 @@ const ExtensionUtils = imports.misc.extensionUtils;
 const Me = ExtensionUtils.getCurrentExtension();
 
 const Gettext = imports.gettext;
-Gettext.textdomain('reminderAlarmClock');
-Gettext.bindtextdomain('reminderAlarmClock', Me.dir.get_child('locale').get_path());
+Gettext.textdomain('reminder_alarm_clock');
+Gettext.bindtextdomain('reminder_alarm_clock', Me.dir.get_child('locale').get_path());
 const _ = Gettext.gettext;
 
 
