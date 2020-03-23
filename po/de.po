@@ -1,0 +1,51 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# Onno Giesmann <nutzer3105@gmail.com>, 2020.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2020-03-20 18:21+0500\n"
+"PO-Revision-Date: 2020-03-22 15:06+0100\n"
+"Last-Translator: Onno Giesmann <nutzer3105@gmail.com>\n"
+"Language-Team: \n"
+"Language: de\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Poedit 2.2.4\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: extension.js:27
+msgid "R"
+msgstr "R"
+
+#: prefs.js:41
+msgid "Extension Preferences"
+msgstr "Erweiterungseinstellungen"
+
+#: prefs.js:51
+msgid "Round to minutes:"
+msgstr "Zur Minute aufrunden:"
+
+#: prefs.js:73
+msgid "Auto hide reminder window:"
+msgstr "Erinnerungsfenster automatisch wieder ausblenden:"
+
+#: prefs.js:95
+msgid "Show remaining time in taskbar:"
+msgstr "Verbleibende Zeit in oberer Leiste anzeigen:"
+
+#: prefs.js:117
+msgid "Play sound:"
+msgstr "Ton wiedergeben:"
+
+#: prefs.js:150
+msgid "Presents <small>(extension restart needed)</small>:"
+msgstr "Vorlagen <small>(Neustart der Erweiterung notwendig)</small>:"
+
+#: prefs.js:173
+msgid "Show test notification"
+msgstr "Zeige Test-Benachrichtigung"
