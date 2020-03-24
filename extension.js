@@ -153,7 +153,7 @@ var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
     }
 
     _createButton(label) {
-        let button = new St.Button({ label: label, style_class: 'number-button' });
+        let button = new St.Button({ label: label, style_class: 'button' });
         button.connect('clicked', () => {
             if (button.label == ResetLabel) {
                 this.alarmClock.reset();
