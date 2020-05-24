@@ -19,6 +19,8 @@ Gettext.textdomain('reminderAlarmClock');
 Gettext.bindtextdomain('reminderAlarmClock', Me.dir.get_child('locale').get_path());
 const _ = Gettext.gettext;
 
+// need to keep while lock screen
+var SavedEndDate = null;
 
 const Icon = {
     ON: 'icons/sand-clock-on-symbolic.svg',
@@ -158,20 +160,24 @@ var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
             if (button.label == ResetLabel) {
                 this.alarmClock.reset();
                 this._updateTimeLabel();
+                this._updateTaskbar(this.alarmClock.isRunning());
             }
             else {
                 let integer = parseInt(button.label, 10);
                 let minutes = isNaN(integer) ? 0 : integer;
-
                 this.alarmClock.isOnlyAlarm = !this.isShowRemainingTimeInTaskbar;
-                this.alarmClock.add(minutes);
-                this.alarmClock.start();
-                this._updateTimeLabel();
+                this._startAlarm(minutes);
             }
-            this._updateTaskbar(this.alarmClock.isRunning());
         });
 
         return button;
+    }
+
+    _startAlarm(minutes) {
+        this.alarmClock.add(minutes);
+        this.alarmClock.start();
+        this._updateTimeLabel();
+        this._updateTaskbar(this.alarmClock.isRunning());
     }
 
     _setPanelMenuIcon(icon) {
@@ -287,6 +293,17 @@ var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
         this.alarmClock.reset();
         super.destroy();
     }
+
+    getEndDate() {
+        return this.alarmClock.isRunning()
+            ? this.alarmClock.getEndDate()
+            : null;
+    }
+
+    setEndDate(date) {
+        let diff = date - Date.now();
+        this._startAlarm(diff > 0 ? (diff / 1000) / 60 : 0);
+    }
 }
 
 // Compatibility with gnome-shell >= 3.32
@@ -317,11 +334,16 @@ function enable() {
     // objects, rather than reusable code. `Main.panel` is the actual panel you
     // see at the top of the screen.
     Main.panel.addToStatusArea(`${Me.metadata.name} ReminderAlarmClock`, reminderAlarmClock);
+
+    // restore after screen lock
+    if (SavedEndDate != null) reminderAlarmClock.setEndDate(SavedEndDate);
 }
 
 
 function disable() {
     log(`disabling ${Me.metadata.name} version ${Me.metadata.version}`);
+
+    SavedEndDate = reminderAlarmClock.getEndDate();
 
     // REMINDER: It's required for extensions to clean up after themselves when
     // they are disabled. This is required for approval during review!

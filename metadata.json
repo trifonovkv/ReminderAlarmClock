@@ -4,6 +4,6 @@
     "uuid": "reminder_alarm_clock@trifonovkv.gmail.com",
     "url": "https://github.com/trifonovkv/ReminderAlarmClock",
 
-    "shell-version": ["3.32.1", "3.34.3"],
-    "version": 5
+    "shell-version": ["3.32.1", "3.34.3", "3.36.2"],
+    "version": 6
 }
