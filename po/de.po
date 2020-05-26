@@ -28,7 +28,7 @@ msgstr "Erweiterungseinstellungen"
 
 #: prefs.js:51
 msgid "Round to minutes:"
-msgstr "Zur Minute aufrunden:"
+msgstr "Auf volle Minuten aufrunden:"
 
 #: prefs.js:73
 msgid "Auto hide reminder window:"
