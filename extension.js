@@ -31,7 +31,7 @@ const ResetLabel = _('R');
 
 
 Number.prototype.pad = function (size) {
-    var s = String(this);
+    let s = String(this);
     while (s.length < (size || 2)) { s = "0" + s; }
     return s;
 }
@@ -308,7 +308,7 @@ var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
     }
 
     _toLabels(presents) {
-        var r = new Array();
+        let r = new Array();
         presents = presents.replace(/\s\s+/g, ' ').trim();
         presents.split(' ').forEach((item) => {
             r.push('+' + item)
