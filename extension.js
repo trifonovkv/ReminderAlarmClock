@@ -16,7 +16,8 @@ const SHELL_MINOR = parseInt(Config.PACKAGE_VERSION.split('.')[1]);
 
 const Gettext = imports.gettext;
 Gettext.textdomain('reminderAlarmClock');
-Gettext.bindtextdomain('reminderAlarmClock', Me.dir.get_child('locale').get_path());
+Gettext.bindtextdomain(
+    'reminderAlarmClock', Me.dir.get_child('locale').get_path());
 const _ = Gettext.gettext;
 
 // need to keep while lock screen
@@ -41,12 +42,14 @@ var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
         super._init(0.0, `${Me.metadata.name} ReminderAlarmClock`, false);
 
         this.icon = new St.Icon({ style_class: 'system-status-icon' });
-        this.label = new St.Label({ text: ':00', y_align: Clutter.ActorAlign.CENTER });
+        this.label = new St.Label({
+            text: ':00', y_align: Clutter.ActorAlign.CENTER
+        });
         this.insert_child_at_index(this.icon, 0);
 
         this.timeLabel = new St.Label({ style_class: 'time-label' });
 
-        // Get the GSchema source so we can lookup our settings
+        // get the GSchema source so we can lookup our settings
         let gschema = Gio.SettingsSchemaSource.new_from_directory(
             Me.dir.get_child('schemas').get_path(),
             Gio.SettingsSchemaSource.get_default(),
@@ -54,7 +57,8 @@ var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
         );
 
         this.settings = new Gio.Settings({
-            settings_schema: gschema.lookup('org.gnome.shell.extensions.reminderalarmclock', true)
+            settings_schema: gschema.lookup(
+                'org.gnome.shell.extensions.reminderalarmclock', true)
         });
 
         this.messageEntry = new St.Entry({
@@ -72,20 +76,28 @@ var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
             () => {
                 this._updateTaskbar(false);
                 this._showReminder();
+                // repeat notification
+                if (this.settings.get_value('repeat').deep_unpack()) {
+                    this.setEndDate(this._parseTime(this.settings.get_value(
+                        'time-repeat').deep_unpack()));
+                }
             }
         );
 
         // to prevent an empty label after sleep mode
         this._updateTimeLabel();
 
-        let menuItem = new PopupMenu.PopupBaseMenuItem({ can_focus: false, reactive: false });
+        let menuItem = new PopupMenu.PopupBaseMenuItem({
+            can_focus: false, reactive: false
+        });
         let presents = this.settings.get_value('presents').deep_unpack()
         menuItem.actor.add(this._makeUi(this._toLabels(presents)));
         this.menu.addMenuItem(menuItem);
 
         this.menu.connect('open-state-changed', () => {
             this._updateTimeLabel();
-            this.settings.set_value('message', new GLib.Variant('s', this.messageEntry.text))
+            this.settings.set_value(
+                'message', new GLib.Variant('s', this.messageEntry.text))
         });
 
         this.settings.connect(
@@ -130,7 +142,8 @@ var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
 
         let threeBox = new St.BoxLayout({ vertical: false });
         threeBox.add(twoBox);
-        threeBox.add(this._makeButtonsColon([ResetLabel, labels[0], labels[1]]));
+        threeBox.add(
+            this._makeButtonsColon([ResetLabel, labels[0], labels[1]]));
 
         let mainBox = new St.BoxLayout({ vertical: true });
         mainBox.add(threeBox);
@@ -155,7 +168,9 @@ var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
     }
 
     _createButton(label) {
-        let button = new St.Button({ label: label, style_class: 'button minutes-button' });
+        let button = new St.Button({
+            label: label, style_class: 'button minutes-button'
+        });
         button.connect('clicked', () => {
             if (button.label == ResetLabel) {
                 this.alarmClock.reset();
@@ -165,7 +180,8 @@ var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
             else {
                 let integer = parseInt(button.label, 10);
                 let minutes = isNaN(integer) ? 0 : integer;
-                this.alarmClock.isOnlyAlarm = !this.isShowRemainingTimeInTaskbar;
+                this.alarmClock.isOnlyAlarm =
+                    !this.isShowRemainingTimeInTaskbar;
                 this._startAlarm(minutes);
             }
         });
@@ -199,7 +215,9 @@ var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
     }
 
     _showReminderWithoutCloseButton() {
-        let reminder = new St.Label({ style_class: 'message-label-with-border' });
+        let reminder = new St.Label({
+            style_class: 'message-label-with-border'
+        });
         Main.uiGroup.add_actor(reminder);
         reminder.text = this.messageEntry.text;
         reminder.opacity = 255;
@@ -218,9 +236,15 @@ var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
     }
 
     _showReminderWithCloseButton() {
-        let label = new St.Label({ text: this.messageEntry.text, style_class: 'message-label' });
-        let button = new St.Button({ label: _('Close'), style_class: 'message-close-button' });
-        let reminder = new St.BoxLayout({ vertical: true, style_class: 'message-layout' });
+        let label = new St.Label({
+            text: this.messageEntry.text, style_class: 'message-label'
+        });
+        let button = new St.Button({
+            label: _('Close'), style_class: 'message-close-button'
+        });
+        let reminder = new St.BoxLayout({
+            vertical: true, style_class: 'message-layout'
+        });
         button.connect('clicked', () => {
             Main.uiGroup.remove_actor(reminder);
             Main.popModal(reminder);
@@ -241,7 +265,8 @@ var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
     }
 
     _playSound() {
-        new SOUND_PLAYER.SoundPlayer().play(this.settings.get_string('sound-file-path'));
+        new SOUND_PLAYER.SoundPlayer().play(
+            this.settings.get_string('sound-file-path'));
     }
 
     _updateTaskbar(isOn) {
@@ -260,7 +285,8 @@ var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
     }
 
     _onDropSecondsChanged() {
-        this.alarmClock.isDropSeconds = this.settings.get_value('drop-seconds').deep_unpack();
+        this.alarmClock.isDropSeconds = this.settings.get_value(
+            'drop-seconds').deep_unpack();
     }
 
     _onPlaySoundChanged() {
@@ -268,7 +294,8 @@ var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
     }
 
     _onAutoCloseReminderWindowChanged() {
-        this.isAutoCloseReminderWindow = this.settings.get_value('auto-close-reminder-window').deep_unpack();
+        this.isAutoCloseReminderWindow = this.settings.get_value(
+            'auto-close-reminder-window').deep_unpack();
     }
 
     _onShowTestReminderChanged() {
