@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-03-20 18:21+0500\n"
+"POT-Creation-Date: 2020-06-19 13:10+0500\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,8 +17,12 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: extension.js:27
+#: extension.js:30
 msgid "R"
+msgstr ""
+
+#: extension.js:258
+msgid "Close"
 msgstr ""
 
 #: prefs.js:41
@@ -41,10 +45,14 @@ msgstr ""
 msgid "Play sound:"
 msgstr ""
 
-#: prefs.js:150
+#: prefs.js:178
+msgid "Repeat Stub:"
+msgstr ""
+
+#: prefs.js:206
 msgid "Presents <small>(extension restart needed)</small>:"
 msgstr ""
 
-#: prefs.js:173
+#: prefs.js:229
 msgid "Show test notification"
 msgstr ""

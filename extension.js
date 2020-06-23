@@ -78,7 +78,7 @@ var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
                 this._showReminder();
                 // repeat notification
                 if (this.settings.get_value('repeat').deep_unpack()) {
-                    this.setEndDate(this._parseTime(this.settings.get_value(
+                    this.setEndDate(this._getRepeatTime(this.settings.get_value(
                         'time-repeat').deep_unpack()));
                 }
             }
@@ -116,8 +116,7 @@ var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
         );
 
         this.settings.connect(
-            'changed::show-test-notification',
-            this._onShowTestReminderChanged.bind(this)
+            'changed::show-test-notification', this._showReminder.bind(this)
         );
 
         this.settings.connect(
@@ -125,10 +124,19 @@ var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
             this._onShowRemainingTimeInTaskbarChanged.bind(this)
         );
 
+        this.settings.connect(
+            'changed::repeat', this._onRepeatChanged.bind(this)
+        );
+
+        this.settings.connect(
+            'changed::time-repeat', this._onRepeatChanged.bind(this)
+        );
+
         this._onDropSecondsChanged();
         this._onPlaySoundChanged();
         this._onAutoCloseReminderWindowChanged();
         this._onShowRemainingTimeInTaskbarChanged();
+        this._onRepeatChanged();
     }
 
     _makeUi(labels) {
@@ -173,13 +181,12 @@ var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
         });
         button.connect('clicked', () => {
             if (button.label == ResetLabel) {
-                this.alarmClock.reset();
-                this._updateTimeLabel();
-                this._updateTaskbar(this.alarmClock.isRunning());
+                this._resetAlarm();
             }
             else {
                 let integer = parseInt(button.label, 10);
                 let minutes = isNaN(integer) ? 0 : integer;
+                // TODO move to _startAlarm
                 this.alarmClock.isOnlyAlarm =
                     !this.isShowRemainingTimeInTaskbar;
                 this._startAlarm(minutes);
@@ -192,6 +199,12 @@ var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
     _startAlarm(minutes) {
         this.alarmClock.add(minutes);
         this.alarmClock.start();
+        this._updateTimeLabel();
+        this._updateTaskbar(this.alarmClock.isRunning());
+    }
+
+    _resetAlarm() {
+        this.alarmClock.reset();
         this._updateTimeLabel();
         this._updateTaskbar(this.alarmClock.isRunning());
     }
@@ -284,6 +297,20 @@ var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
         }
     }
 
+    _getRepeatTime(timeString) {
+        let parts = timeString.split(':');
+        let repeatTime = new Date();
+        repeatTime.setHours(parts[0]);
+        repeatTime.setMinutes(parts[1]);
+        repeatTime.setSeconds(0);
+        repeatTime.setMilliseconds(0);
+        let oneSecond = 1000;
+        return repeatTime.getTime() - Date.now() < oneSecond
+            // shift for one day 
+            ? new Date(repeatTime.getTime() + 24 * 60 * 60 * 1000)
+            : repeatTime;
+    }
+
     _onDropSecondsChanged() {
         this.alarmClock.isDropSeconds = this.settings.get_value(
             'drop-seconds').deep_unpack();
@@ -298,13 +325,24 @@ var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
             'auto-close-reminder-window').deep_unpack();
     }
 
-    _onShowTestReminderChanged() {
-        this._showReminder();
+    _onShowRemainingTimeInTaskbarChanged() {
+        this.isShowRemainingTimeInTaskbar = this.settings.get_value(
+            'show-remaining-time-in-taskbar').deep_unpack();
+        this._updateTaskbar(this.alarmClock.isRunning());
     }
 
-    _onShowRemainingTimeInTaskbarChanged() {
-        this.isShowRemainingTimeInTaskbar = this.settings.get_value('show-remaining-time-in-taskbar').deep_unpack();
-        this._updateTaskbar(this.alarmClock.isRunning());
+    _onRepeatChanged() {
+        if (this.settings.get_value('repeat').deep_unpack()) {
+            this.alarmClock.reset();
+            // TODO move to start alarm
+            this.alarmClock.isOnlyAlarm =
+                !this.isShowRemainingTimeInTaskbar;
+            this.setEndDate(this._getRepeatTime(
+                this.settings.get_value('time-repeat').deep_unpack()));
+        }
+        else {
+            this._resetAlarm();
+        }
     }
 
     _toLabels(presents) {
@@ -328,6 +366,7 @@ var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
     }
 
     setEndDate(date) {
+        this._resetAlarm();
         let diff = date - Date.now();
         this._startAlarm(diff > 0 ? (diff / 1000) / 60 : 0);
     }
@@ -363,7 +402,9 @@ function enable() {
     Main.panel.addToStatusArea(`${Me.metadata.name} ReminderAlarmClock`, reminderAlarmClock);
 
     // restore after screen lock
-    if (SavedEndDate != null) reminderAlarmClock.setEndDate(SavedEndDate);
+    if (SavedEndDate != null) {
+        reminderAlarmClock.setEndDate(SavedEndDate);
+    }
 }
 
 

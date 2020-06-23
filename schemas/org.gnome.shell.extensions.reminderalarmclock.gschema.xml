@@ -25,5 +25,11 @@
     <key name="show-remaining-time-in-taskbar" type="b">
       <default>false</default>
     </key>
+    <key name="repeat" type="b">
+      <default>false</default>
+    </key>
+    <key name="time-repeat" type="s">
+      <default>"13:00"</default>
+    </key>
   </schema>
 </schemalist>

@@ -53,7 +53,7 @@ function buildPrefsWidget() {
         visible: true
     });
     prefsWidget.attach(dropSecondsLabel, 0, 1, 1, 1);
-    
+
     let dropSecondsSwitch = new Gtk.Switch({
         active: this.settings.get_boolean('drop-seconds'),
         halign: Gtk.Align.END,
@@ -75,7 +75,7 @@ function buildPrefsWidget() {
         visible: true
     });
     prefsWidget.attach(autoCloseReminderWindowLabel, 0, 2, 1, 1);
-    
+
     let autoCloseReminderWindowSwitch = new Gtk.Switch({
         active: this.settings.get_boolean('auto-close-reminder-window'),
         halign: Gtk.Align.END,
@@ -97,7 +97,7 @@ function buildPrefsWidget() {
         visible: true
     });
     prefsWidget.attach(showRemainingTimeInTaskbarLabel, 0, 3, 1, 1);
-    
+
     let showRemainingTimeInTaskbarSwitch = new Gtk.Switch({
         active: this.settings.get_boolean('show-remaining-time-in-taskbar'),
         halign: Gtk.Align.END,
@@ -145,6 +145,61 @@ function buildPrefsWidget() {
 
     prefsWidget.attach(soundChooser, 1, 5, 1, 1);
 
+    playSoundSwitch.connect('state_changed', (self) => {
+        soundChooser.set_sensitive(self.active);
+    });
+
+
+    let timeRepeatEntry = new Gtk.Entry({
+        text: this.settings.get_string('time-repeat'),
+        halign: Gtk.Align.END,
+        visible: true,        
+        name: 'time-repeat-entry'
+    });
+
+    timeRepeatEntry.connect('changed', (self) => {
+        if (/^([0-9]|0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$/.test(self.text)) {
+            this.settings.set_string('time-repeat', self.text);
+            self.secondary_icon_name = '';
+        } else {
+            self.secondary_icon_name = 'dialog-error-symbolic';
+        }
+    });
+
+    this.settings.bind(
+        'time-repeat',
+        timeRepeatEntry,
+        'icon-press',
+        Gio.SettingsBindFlags.DEFAULT
+    );
+
+    let repeatLabel = new Gtk.Label({
+        label: _('Repeat every day:'),
+        halign: Gtk.Align.START,
+        visible: true
+    });
+    prefsWidget.attach(repeatLabel, 0, 6, 1, 1);
+
+    let repeatSwitch = new Gtk.Switch({
+        active: this.settings.get_boolean('repeat'),
+        halign: Gtk.Align.END,
+        visible: true
+    });
+    
+    repeatSwitch.connect('state_changed', (self) => {
+        timeRepeatEntry.set_sensitive(self.active);
+    });
+
+    this.settings.bind(
+        'repeat',
+        repeatSwitch,
+        'active',
+        Gio.SettingsBindFlags.DEFAULT
+    );
+
+    prefsWidget.attach(repeatSwitch, 1, 6, 1, 1);
+    prefsWidget.attach(timeRepeatEntry, 1, 7, 1, 1);
+
 
     let presentsLabel = new Gtk.Label({
         label: _('Presents <small>(extension restart needed)</small>:'),
@@ -152,14 +207,14 @@ function buildPrefsWidget() {
         use_markup: true,
         visible: true
     });
-    prefsWidget.attach(presentsLabel, 0, 6, 1, 1);
-    
+    prefsWidget.attach(presentsLabel, 0, 8, 1, 1);
+
     let presentsEntry = new Gtk.Entry({
         text: this.settings.get_string('presents'),
         halign: Gtk.Align.END,
         visible: true
     });
-    prefsWidget.attach(presentsEntry, 1, 6, 1, 1);
+    prefsWidget.attach(presentsEntry, 1, 8, 1, 1);
 
     this.settings.bind(
         'presents',
@@ -176,10 +231,12 @@ function buildPrefsWidget() {
     });
 
     showTestNotificationButton.connect('clicked', () => {
-        this.settings.set_boolean('show-test-notification', true);
+        this.settings.set_boolean(
+            'show-test-notification', !this.settings.get_boolean(
+                'show-test-notification'));
     });
 
-    prefsWidget.attach(showTestNotificationButton, 0, 7, 2, 1);
+    prefsWidget.attach(showTestNotificationButton, 0, 9, 2, 1);
 
     // Return our widget which will be added to the window
     return prefsWidget;
