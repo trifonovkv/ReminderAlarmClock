@@ -186,9 +186,6 @@ var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
             else {
                 let integer = parseInt(button.label, 10);
                 let minutes = isNaN(integer) ? 0 : integer;
-                // TODO move to _startAlarm
-                this.alarmClock.isOnlyAlarm =
-                    !this.isShowRemainingTimeInTaskbar;
                 this._startAlarm(minutes);
             }
         });
@@ -197,6 +194,8 @@ var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
     }
 
     _startAlarm(minutes) {
+        this.alarmClock.isOnlyAlarm =
+                    !this.isShowRemainingTimeInTaskbar;
         this.alarmClock.add(minutes);
         this.alarmClock.start();
         this._updateTimeLabel();
@@ -334,9 +333,6 @@ var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
     _onRepeatChanged() {
         if (this.settings.get_value('repeat').deep_unpack()) {
             this.alarmClock.reset();
-            // TODO move to start alarm
-            this.alarmClock.isOnlyAlarm =
-                !this.isShowRemainingTimeInTaskbar;
             this.setEndDate(this._getRepeatTime(
                 this.settings.get_value('time-repeat').deep_unpack()));
         }
