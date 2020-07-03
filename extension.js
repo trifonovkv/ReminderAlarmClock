@@ -195,7 +195,7 @@ var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
 
     _startAlarm(minutes) {
         this.alarmClock.isOnlyAlarm =
-                    !this.isShowRemainingTimeInTaskbar;
+            !this.isShowRemainingTimeInTaskbar;
         this.alarmClock.add(minutes);
         this.alarmClock.start();
         this._updateTimeLabel();
@@ -328,6 +328,10 @@ var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
         this.isShowRemainingTimeInTaskbar = this.settings.get_value(
             'show-remaining-time-in-taskbar').deep_unpack();
         this._updateTaskbar(this.alarmClock.isRunning());
+        if (this.alarmClock.isRunning()) {
+            // restart alarm
+            this.setEndDate(this.getEndDate());
+        }
     }
 
     _onRepeatChanged() {
