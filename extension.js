@@ -4,7 +4,7 @@ const { Gio, GLib, GObject, St, Clutter } = imports.gi;
 const Main = imports.ui.main;
 const PanelMenu = imports.ui.panelMenu;
 const PopupMenu = imports.ui.popupMenu;
-const Tweener = imports.ui.tweener;
+const Tweener = imports.tweener.tweener;
 const Config = imports.misc.config;
 const ExtensionUtils = imports.misc.extensionUtils;
 
