@@ -37,7 +37,8 @@ Number.prototype.pad = function (size) {
 }
 
 
-var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
+var ReminderAlarmClock = GObject.registerClass(
+class ReminderAlarmClock extends PanelMenu.Button {
     _init() {
         super._init(0.0, `${Me.metadata.name} ReminderAlarmClock`, false);
 
@@ -370,7 +371,7 @@ var ReminderAlarmClock = class ReminderAlarmClock extends PanelMenu.Button {
         let diff = date - Date.now();
         this._startAlarm(diff > 0 ? (diff / 1000) / 60 : 0);
     }
-}
+});
 
 // Compatibility with gnome-shell >= 3.32
 if (SHELL_MINOR > 30) {
