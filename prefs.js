@@ -14,6 +14,11 @@ const _ = Gettext.gettext;
 function init() {
 }
 
+function soundChooserLabel() {
+    let file = Gio.File.new_for_uri(this.settings.get_string('sound-file-path'))
+    let filename = file.get_basename() || "None"
+    return `${_('Selected')} "${filename}". ${_('Choose new…')}`;
+}
 
 function buildPrefsWidget() {
 
@@ -30,7 +35,10 @@ function buildPrefsWidget() {
 
     // Create a parent widget that we'll return from this function
     let prefsWidget = new Gtk.Grid({
-        margin: 36,
+        margin_start: 36,
+        margin_end: 36,
+        margin_top: 36,
+        margin_bottom: 36,
         column_spacing: 12,
         row_spacing: 12,
         visible: true,
@@ -134,18 +142,32 @@ function buildPrefsWidget() {
         Gio.SettingsBindFlags.DEFAULT
     );
 
-    let soundChooser = new Gtk.FileChooserButton({
-        visible: true
+    let soundChooser = new Gtk.Button({
+        visible: true,
+        label: soundChooserLabel(),
     });
 
-    soundChooser.set_uri(this.settings.get_string('sound-file-path'));
-    soundChooser.connect('file-set', (widget) => {
-        this.settings.set_string('sound-file-path', widget.get_uri());
+    soundChooser.connect('clicked', (widget) => {
+        let dialog = new Gtk.FileChooserNative({
+            action: Gtk.FileChooserAction.OPEN,
+            modal: true,
+            title: _("Please choose sound file"),
+        });
+        dialog.set_file(Gio.File.new_for_uri(this.settings.get_string('sound-file-path')));
+        dialog.connect('response', (dialog, response_id) => {
+            if(response_id == Gtk.ResponseType.ACCEPT)
+            {
+                this.settings.set_string('sound-file-path', dialog.get_file().get_uri());
+                soundChooser.set_label(soundChooserLabel());
+            }
+        });
+
+        dialog.show();
     });
 
     prefsWidget.attach(soundChooser, 1, 5, 1, 1);
 
-    playSoundSwitch.connect('state_changed', (self) => {
+    playSoundSwitch.connect('state-set', (self) => {
         soundChooser.set_sensitive(self.active);
     });
 
@@ -186,7 +208,7 @@ function buildPrefsWidget() {
         visible: true
     });
     
-    repeatSwitch.connect('state_changed', (self) => {
+    repeatSwitch.connect('state-set', (self) => {
         timeRepeatEntry.set_sensitive(self.active);
     });
 
