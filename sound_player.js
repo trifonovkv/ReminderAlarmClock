@@ -1,26 +1,14 @@
-const Gst = imports.gi.Gst; Gst.init(null);
+'use strict';
+
+const { Gio } = imports.gi;
 
 var SoundPlayer = class SoundPlayer {
-
     constructor() {
-        this.playbin = Gst.ElementFactory.make("playbin", "player");
-        let bus = this.playbin.get_bus();
-        bus.add_signal_watch();
-        bus.connect('message', (_, msg) => this._on_message_received(msg));
+        this.player = global.display.get_sound_player();
     }
 
     play(uri) {
-        this.playbin.set_property("uri", uri);
-        this.playbin.set_state(Gst.State.PLAYING);
-    }
-
-    stop() {
-        this.playbin.set_state(Gst.State.NULL);
-    }
-
-    _on_message_received(msg) {
-        if (msg.type == Gst.MessageType.EOS || msg.type == Gst.MessageType.ERROR) {
-            this.stop();
-        }
+        let file = Gio.File.new_for_uri(uri);
+        this.player.play_from_file(file, 'Alarm Clock', null);
     }
 }
