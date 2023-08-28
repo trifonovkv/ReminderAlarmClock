@@ -48,7 +48,7 @@ class ReminderAlarmClock extends PanelMenu.Button {
         });
         this.insert_child_at_index(this.icon, 0);
 
-        this.timeLabel = new St.Label({ style_class: 'time-label' });
+        this.timeLabel = new St.Label({ style_class: 'rac-time-label' });
 
         // get the GSchema source so we can lookup our settings
         let gschema = Gio.SettingsSchemaSource.new_from_directory(
@@ -65,7 +65,7 @@ class ReminderAlarmClock extends PanelMenu.Button {
         this.messageEntry = new St.Entry({
             track_hover: false,
             can_focus: true,
-            style_class: 'message-entry',
+            style_class: 'rac-message-entry',
             text: this.settings.get_value('message').deep_unpack()
         });
 
@@ -178,7 +178,7 @@ class ReminderAlarmClock extends PanelMenu.Button {
 
     _createButton(label) {
         let button = new St.Button({
-            label: label, style_class: 'button minutes-button'
+            label: label, style_class: 'button rac-minutes-button'
         });
         button.connect('clicked', () => {
             if (button.label == ResetLabel) {
@@ -229,7 +229,7 @@ class ReminderAlarmClock extends PanelMenu.Button {
 
     _showReminderWithoutCloseButton() {
         let reminder = new St.Label({
-            style_class: 'message-label-with-border'
+            style_class: 'rac-message-label-with-border'
         });
         Main.uiGroup.add_actor(reminder);
         reminder.text = this.messageEntry.text;
@@ -250,13 +250,13 @@ class ReminderAlarmClock extends PanelMenu.Button {
 
     _showReminderWithCloseButton() {
         let label = new St.Label({
-            text: this.messageEntry.text, style_class: 'message-label'
+            text: this.messageEntry.text, style_class: 'rac-message-label'
         });
         let button = new St.Button({
-            label: _('Close'), style_class: 'message-close-button'
+            label: _('Close'), style_class: 'rac-message-close-button'
         });
         let reminder = new St.BoxLayout({
-            vertical: true, style_class: 'message-layout'
+            vertical: true, style_class: 'rac-message-layout'
         });
         button.connect('clicked', () => {
             Main.uiGroup.remove_actor(reminder);

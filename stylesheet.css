@@ -1,4 +1,4 @@
-.minutes-button {
+.rac-minutes-button {
     border-radius: 5px;
     border-width: 1px;
     box-shadow: none;
@@ -8,7 +8,7 @@
     font-size: 24px;
 }
 
-.time-label {
+.rac-time-label {
     border-radius: 5px;
     margin: 4px;
     padding: 4px 10px 4px 10px;
@@ -19,7 +19,7 @@
     text-align: center;
 }
 
-.message-label {
+.rac-message-label {
     font-size: 64px;
     font-weight: bold;
     color: #eeeeec;
@@ -27,7 +27,7 @@
     padding: .3em;
 }
 
-.message-label-with-border {
+.rac-message-label-with-border {
     font-size: 64px;
     font-weight: bold;
     color: #eeeeec;
@@ -37,7 +37,7 @@
     padding: .3em;
 }
 
-.message-close-button {
+.rac-message-close-button {
     font-size: 16px;
     color: #3f3e40;
     background-color: #eeeeec;
@@ -45,11 +45,11 @@
     margin: .2em;
 }
 
-.message-close-button:active {
+.rac-message-close-button:active {
    background-color: #3f3e40;
 }
 
-.message-layout {
+.rac-message-layout {
     font-size: 64px;
     font-weight: bold;
     background-color: #3f3e40;
@@ -58,7 +58,7 @@
     padding: .2em;
 }
 
-.message-entry {
+.rac-message-entry {
     border-radius: 5px;
     margin: 16px 4px 4px 4px;
     border: solid 1px;
