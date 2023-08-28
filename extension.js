@@ -12,7 +12,7 @@ const Me = ExtensionUtils.getCurrentExtension();
 const SOUND_PLAYER = Me.imports.sound_player;
 const ALARM_CLOCK = Me.imports.alarm_clock;
 
-const SHELL_MINOR = parseInt(Config.PACKAGE_VERSION.split('.')[1]);
+const [SHELL_MAJOR, SHELL_MINOR] = Config.PACKAGE_VERSION.split('.').map(s => Number(s));
 
 const Gettext = imports.gettext;
 Gettext.textdomain('reminderAlarmClock');
@@ -260,13 +260,21 @@ class ReminderAlarmClock extends PanelMenu.Button {
         });
         button.connect('clicked', () => {
             Main.uiGroup.remove_actor(reminder);
-            Main.popModal(reminder);
+
+            let _modalArg = reminder;
+            if(SHELL_MAJOR >= 4 || (SHELL_MAJOR == 4 && SHELL_MINOR >= 42)) {
+                _modalArg = this._modalGrab;
+            }
+
+            if(_modalArg) {
+                Main.popModal(_modalArg);
+            }
         });
         reminder.add(label);
         reminder.add(button);
         Main.uiGroup.add_actor(reminder);
         this._setReminderPosition(reminder);
-        Main.pushModal(reminder);
+        this._modalGrab = Main.pushModal(reminder);
     }
 
     _setReminderPosition(reminder) {
@@ -374,7 +382,7 @@ class ReminderAlarmClock extends PanelMenu.Button {
 });
 
 // Compatibility with gnome-shell >= 3.32
-if (SHELL_MINOR > 30) {
+if (SHELL_MAJOR == 3 && SHELL_MINOR > 30) {
     ReminderAlarmClock = GObject.registerClass(
         { GTypeName: 'ReminderAlarmClock' },
         ReminderAlarmClock
