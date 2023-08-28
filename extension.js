@@ -262,7 +262,7 @@ class ReminderAlarmClock extends PanelMenu.Button {
             Main.uiGroup.remove_actor(reminder);
 
             let _modalArg = reminder;
-            if(SHELL_MAJOR >= 4 || (SHELL_MAJOR == 4 && SHELL_MINOR >= 42)) {
+            if(SHELL_MAJOR > 4 || (SHELL_MAJOR == 4 && SHELL_MINOR >= 42)) {
                 _modalArg = this._modalGrab;
             }
 
