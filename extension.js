@@ -395,14 +395,11 @@ var reminderAlarmClock = null;
 
 
 function init() {
-    log(`initializing ${Me.metadata.name} version ${Me.metadata.version}`);
     ExtensionUtils.initTranslations('reminder_alarm_clock');
 }
 
 
 function enable() {
-    log(`enabling ${Me.metadata.name} version ${Me.metadata.version}`);
-
     reminderAlarmClock = new ReminderAlarmClock();
 
     // The `main` import is an example of file that is mostly live instances of
@@ -418,8 +415,6 @@ function enable() {
 
 
 function disable() {
-    log(`disabling ${Me.metadata.name} version ${Me.metadata.version}`);
-
     SavedEndDate = reminderAlarmClock.getEndDate();
 
     // REMINDER: It's required for extensions to clean up after themselves when
