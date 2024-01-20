@@ -1,9 +1,6 @@
-const Mainloop = imports.mainloop;
-const GLib = imports.gi.GLib;
-
+import GLib from 'gi://GLib';
 
 class Timer {
-
     constructor() {
         this.id = 0;
     }
@@ -12,22 +9,22 @@ class Timer {
         if (this.id > 0) {
             return false;
         }
-        this.id = Mainloop.timeout_add_seconds(
+
+        this.id = GLib.timeout_add_seconds(
+            GLib.PRIORITY_DEFAULT,
             seconds,
             () => {
                 return callback();
             }
         );
+
         return true;
     }
 
     reset() {
         if (this.id > 0) {
-            let source = GLib.main_context_default().find_source_by_id(this.id);
-            if (source != null) {
-                source.destroy();
-                this.id = 0;
-            }
+            GLib.Source.remove(this.id);
+            this.id = 0;
         }
     }
 
@@ -75,8 +72,10 @@ class CountdownTimer {
         let repeatedlyCallback = () => {
             let left = this._getLeftBy(notification.timeout);
             if (left > 0) {
-                // run separately
-                Mainloop.idle_add(() => { notification.callback(left); });
+                GLib.idle_add(
+                    GLib.PRIORITY_DEFAULT,
+                    () => { notification.callback(left); },
+                );
                 return true;  // repeat
             }
             this.isRunning = false;
@@ -122,7 +121,7 @@ class CountdownTimer {
 }
 
 
-var AlarmClock = class AlarmClock {
+export default class AlarmClock {
 
     constructor(halfMinutesCallback, secondsCallback, endCallback) {
         this.halfMinutesNotification = new Notification(halfMinutesCallback, 30, 0);

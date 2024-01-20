@@ -1,8 +1,8 @@
 'use strict';
 
-const { Gio } = imports.gi;
+import Gio from 'gi://Gio';
 
-var SoundPlayer = class SoundPlayer {
+export default class SoundPlayer {
     constructor() {
         this.player = global.display.get_sound_player();
     }

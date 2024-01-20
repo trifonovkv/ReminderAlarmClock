@@ -1,24 +1,22 @@
 'use strict';
 
-const { Gio, GLib, GObject, St, Clutter } = imports.gi;
-const Main = imports.ui.main;
-const PanelMenu = imports.ui.panelMenu;
-const PopupMenu = imports.ui.popupMenu;
-const Tweener = imports.tweener.tweener;
-const Config = imports.misc.config;
-const ExtensionUtils = imports.misc.extensionUtils;
+import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
+import GObject from 'gi://GObject';
+import St from 'gi://St';
+import Clutter from 'gi://Clutter';
+import * as Main from 'resource:///org/gnome/shell/ui/main.js';
+import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
+import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 
-const Me = ExtensionUtils.getCurrentExtension();
-const SOUND_PLAYER = Me.imports.sound_player;
-const ALARM_CLOCK = Me.imports.alarm_clock;
+import {Extension, gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
+import * as Config from 'resource:///org/gnome/shell/misc/config.js';
+
+import SoundPlayer from './sound_player.js';
+import AlarmClock from './alarm_clock.js';
 
 const [SHELL_MAJOR, SHELL_MINOR] = Config.PACKAGE_VERSION.split('.').map(s => Number(s));
 
-const Gettext = imports.gettext;
-Gettext.textdomain('reminderAlarmClock');
-Gettext.bindtextdomain(
-    'reminderAlarmClock', Me.dir.get_child('locale').get_path());
-const _ = Gettext.gettext;
 
 // need to keep while lock screen
 var SavedEndDate = null;
@@ -27,7 +25,6 @@ const Icon = {
     ON: 'icons/sand-clock-on-symbolic.svg',
     OFF: 'icons/sand-clock-off-symbolic.svg',
 };
-const ResetLabel = _('R');
 
 
 Number.prototype.pad = function (size) {
@@ -39,8 +36,11 @@ Number.prototype.pad = function (size) {
 
 var ReminderAlarmClock = GObject.registerClass(
 class ReminderAlarmClock extends PanelMenu.Button {
-    _init() {
-        super._init(0.0, `${Me.metadata.name} ReminderAlarmClock`, false);
+    _init(extension) {
+        super._init(0.0, `${extension.metadata.name} ReminderAlarmClock`, false);
+
+        this.extension = extension;
+        this.ResetLabel = _('R');
 
         this.icon = new St.Icon({ style_class: 'system-status-icon' });
         this.label = new St.Label({
@@ -50,17 +50,7 @@ class ReminderAlarmClock extends PanelMenu.Button {
 
         this.timeLabel = new St.Label({ style_class: 'rac-time-label' });
 
-        // get the GSchema source so we can lookup our settings
-        let gschema = Gio.SettingsSchemaSource.new_from_directory(
-            Me.dir.get_child('schemas').get_path(),
-            Gio.SettingsSchemaSource.get_default(),
-            false
-        );
-
-        this.settings = new Gio.Settings({
-            settings_schema: gschema.lookup(
-                'org.gnome.shell.extensions.reminderalarmclock', true)
-        });
+        this.settings = extension.getSettings();
 
         this.messageEntry = new St.Entry({
             track_hover: false,
@@ -69,7 +59,7 @@ class ReminderAlarmClock extends PanelMenu.Button {
             text: this.settings.get_value('message').deep_unpack()
         });
 
-        this.alarmClock = new ALARM_CLOCK.AlarmClock(
+        this.alarmClock = new AlarmClock(
             (hm) => {
                 this.label.text = Math.round(hm / 2) + ':';
             },
@@ -152,7 +142,7 @@ class ReminderAlarmClock extends PanelMenu.Button {
         let threeBox = new St.BoxLayout({ vertical: false });
         threeBox.add(twoBox);
         threeBox.add(
-            this._makeButtonsColon([ResetLabel, labels[0], labels[1]]));
+            this._makeButtonsColon([this.ResetLabel, labels[0], labels[1]]));
 
         let mainBox = new St.BoxLayout({ vertical: true });
         mainBox.add(threeBox);
@@ -181,7 +171,7 @@ class ReminderAlarmClock extends PanelMenu.Button {
             label: label, style_class: 'button rac-minutes-button'
         });
         button.connect('clicked', () => {
-            if (button.label == ResetLabel) {
+            if (button.label == this.ResetLabel) {
                 this._resetAlarm();
             }
             else {
@@ -211,7 +201,7 @@ class ReminderAlarmClock extends PanelMenu.Button {
 
     _setPanelMenuIcon(icon) {
         this.icon.gicon = new Gio.FileIcon({
-            file: Gio.File.new_for_path(Me.dir.get_child(icon).get_path())
+            file: Gio.File.new_for_path(this.extension.dir.get_child(icon).get_path())
         });
     }
 
@@ -236,16 +226,14 @@ class ReminderAlarmClock extends PanelMenu.Button {
         reminder.opacity = 255;
         this._setReminderPosition(reminder);
 
-        Tweener.addTween(reminder,
-            {
-                opacity: 0,
-                time: 5,
-                transition: 'easeInQuint',
-                onComplete: () => {
-                    Main.uiGroup.remove_actor(reminder);
-                }
+        reminder.ease({
+            opacity: 0,
+            duration: 5000,
+            transition: Clutter.AnimationMode.EASE_OUT_QUAD,
+            onComplete: () => {
+                Main.uiGroup.remove_actor(reminder);
             }
-        );
+        });
     }
 
     _showReminderWithCloseButton() {
@@ -286,7 +274,7 @@ class ReminderAlarmClock extends PanelMenu.Button {
     }
 
     _playSound() {
-        new SOUND_PLAYER.SoundPlayer().play(
+        new SoundPlayer().play(
             this.settings.get_string('sound-file-path'));
     }
 
@@ -389,38 +377,29 @@ if (SHELL_MAJOR == 3 && SHELL_MINOR > 30) {
     );
 }
 
-// We're going to declare `reminderAlarmClock` in the scope of the whole script so it can
-// be accessed in both `enable()` and `disable()`
-var reminderAlarmClock = null;
+export default class ReminderAlarmClockExtension extends Extension {
+    enable() {
+        this.reminderAlarmClock = new ReminderAlarmClock(this);
 
+        // The `main` import is an example of file that is mostly live instances of
+        // objects, rather than reusable code. `Main.panel` is the actual panel you
+        // see at the top of the screen.
+        Main.panel.addToStatusArea(`${this.metadata.name} ReminderAlarmClock`, this.reminderAlarmClock);
 
-function init() {
-    ExtensionUtils.initTranslations('reminder_alarm_clock');
-}
-
-
-function enable() {
-    reminderAlarmClock = new ReminderAlarmClock();
-
-    // The `main` import is an example of file that is mostly live instances of
-    // objects, rather than reusable code. `Main.panel` is the actual panel you
-    // see at the top of the screen.
-    Main.panel.addToStatusArea(`${Me.metadata.name} ReminderAlarmClock`, reminderAlarmClock);
-
-    // restore after screen lock
-    if (SavedEndDate != null) {
-        reminderAlarmClock.setEndDate(SavedEndDate);
+        // restore after screen lock
+        if (SavedEndDate != null) {
+            this.reminderAlarmClock.setEndDate(SavedEndDate);
+        }
     }
-}
 
+    disable() {
+        SavedEndDate = this.reminderAlarmClock.getEndDate();
 
-function disable() {
-    SavedEndDate = reminderAlarmClock.getEndDate();
-
-    // REMINDER: It's required for extensions to clean up after themselves when
-    // they are disabled. This is required for approval during review!
-    if (reminderAlarmClock !== null) {
-        reminderAlarmClock.destroy();
-        reminderAlarmClock = null;
+        // REMINDER: It's required for extensions to clean up after themselves when
+        // they are disabled. This is required for approval during review!
+        if (this.reminderAlarmClock !== null) {
+            this.reminderAlarmClock.destroy();
+            this.reminderAlarmClock = null;
+        }
     }
 }
