@@ -4,12 +4,10 @@
     "uuid": "reminder_alarm_clock@trifonovkv.gmail.com",
     "url": "https://github.com/trifonovkv/ReminderAlarmClock",
 
+    "gettext-domain": "reminderAlarmClock",
+    "settings-schema": "org.gnome.shell.extensions.reminderalarmclock",
+
     "shell-version": [
-        "40",
-        "41",
-        "42",
-        "43",
-        "44"
-    ],
-    "version": 999
+        "45"
+    ]
 }
