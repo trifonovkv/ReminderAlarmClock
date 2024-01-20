@@ -10,12 +10,9 @@ import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
 import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 
 import {Extension, gettext as _} from 'resource:///org/gnome/shell/extensions/extension.js';
-import * as Config from 'resource:///org/gnome/shell/misc/config.js';
 
 import SoundPlayer from './sound_player.js';
 import AlarmClock from './alarm_clock.js';
-
-const [SHELL_MAJOR, SHELL_MINOR] = Config.PACKAGE_VERSION.split('.').map(s => Number(s));
 
 
 // need to keep while lock screen
@@ -249,13 +246,8 @@ class ReminderAlarmClock extends PanelMenu.Button {
         button.connect('clicked', () => {
             Main.uiGroup.remove_actor(reminder);
 
-            let _modalArg = reminder;
-            if(SHELL_MAJOR > 4 || (SHELL_MAJOR == 4 && SHELL_MINOR >= 42)) {
-                _modalArg = this._modalGrab;
-            }
-
-            if(_modalArg) {
-                Main.popModal(_modalArg);
+            if(this._modalGrab) {
+                Main.popModal(this._modalGrab);
             }
         });
         reminder.add(label);
@@ -368,14 +360,6 @@ class ReminderAlarmClock extends PanelMenu.Button {
         this._startAlarm(diff > 0 ? (diff / 1000) / 60 : 0);
     }
 });
-
-// Compatibility with gnome-shell >= 3.32
-if (SHELL_MAJOR == 3 && SHELL_MINOR > 30) {
-    ReminderAlarmClock = GObject.registerClass(
-        { GTypeName: 'ReminderAlarmClock' },
-        ReminderAlarmClock
-    );
-}
 
 export default class ReminderAlarmClockExtension extends Extension {
     enable() {

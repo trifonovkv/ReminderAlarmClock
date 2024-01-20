@@ -11,7 +11,7 @@ import {ExtensionPreferences, gettext as _} from 'resource:///org/gnome/Shell/Ex
 
 export default class ReminderAlarmClockPreferences extends ExtensionPreferences {
     getPreferencesWidget() {
-        this.settings = this.getSettings();
+        const settings = this.getSettings();
 
         // Create a parent widget that we'll return from this function
         let prefsWidget = new Gtk.Grid({
@@ -43,13 +43,13 @@ export default class ReminderAlarmClockPreferences extends ExtensionPreferences 
         prefsWidget.attach(dropSecondsLabel, 0, 1, 1, 1);
 
         let dropSecondsSwitch = new Gtk.Switch({
-            active: this.settings.get_boolean('drop-seconds'),
+            active: settings.get_boolean('drop-seconds'),
             halign: Gtk.Align.END,
             visible: true
         });
         prefsWidget.attach(dropSecondsSwitch, 1, 1, 1, 1);
 
-        this.settings.bind(
+        settings.bind(
             'drop-seconds',
             dropSecondsSwitch,
             'active',
@@ -65,13 +65,13 @@ export default class ReminderAlarmClockPreferences extends ExtensionPreferences 
         prefsWidget.attach(autoCloseReminderWindowLabel, 0, 2, 1, 1);
 
         let autoCloseReminderWindowSwitch = new Gtk.Switch({
-            active: this.settings.get_boolean('auto-close-reminder-window'),
+            active: settings.get_boolean('auto-close-reminder-window'),
             halign: Gtk.Align.END,
             visible: true
         });
         prefsWidget.attach(autoCloseReminderWindowSwitch, 1, 2, 1, 1);
 
-        this.settings.bind(
+        settings.bind(
             'auto-close-reminder-window',
             autoCloseReminderWindowSwitch,
             'active',
@@ -87,13 +87,13 @@ export default class ReminderAlarmClockPreferences extends ExtensionPreferences 
         prefsWidget.attach(showRemainingTimeInTaskbarLabel, 0, 3, 1, 1);
 
         let showRemainingTimeInTaskbarSwitch = new Gtk.Switch({
-            active: this.settings.get_boolean('show-remaining-time-in-taskbar'),
+            active: settings.get_boolean('show-remaining-time-in-taskbar'),
             halign: Gtk.Align.END,
             visible: true
         });
         prefsWidget.attach(showRemainingTimeInTaskbarSwitch, 1, 3, 1, 1);
 
-        this.settings.bind(
+        settings.bind(
             'show-remaining-time-in-taskbar',
             showRemainingTimeInTaskbarSwitch,
             'active',
@@ -109,13 +109,13 @@ export default class ReminderAlarmClockPreferences extends ExtensionPreferences 
         prefsWidget.attach(playSoundLabel, 0, 4, 1, 1);
 
         let playSoundSwitch = new Gtk.Switch({
-            active: this.settings.get_boolean('play-sound'),
+            active: settings.get_boolean('play-sound'),
             halign: Gtk.Align.END,
             visible: true
         });
         prefsWidget.attach(playSoundSwitch, 1, 4, 1, 1);
 
-        this.settings.bind(
+        settings.bind(
             'play-sound',
             playSoundSwitch,
             'active',
@@ -133,11 +133,11 @@ export default class ReminderAlarmClockPreferences extends ExtensionPreferences 
                 modal: true,
                 title: _("Please choose sound file"),
             });
-            dialog.set_file(Gio.File.new_for_uri(this.settings.get_string('sound-file-path')));
+            dialog.set_file(Gio.File.new_for_uri(settings.get_string('sound-file-path')));
             dialog.connect('response', (dialog, response_id) => {
                 if(response_id == Gtk.ResponseType.ACCEPT)
                 {
-                    this.settings.set_string('sound-file-path', dialog.get_file().get_uri());
+                    settings.set_string('sound-file-path', dialog.get_file().get_uri());
                     soundChooser.set_label(this.soundChooserLabel());
                 }
             });
@@ -153,7 +153,7 @@ export default class ReminderAlarmClockPreferences extends ExtensionPreferences 
 
 
         let timeRepeatEntry = new Gtk.Entry({
-            text: this.settings.get_string('time-repeat'),
+            text: settings.get_string('time-repeat'),
             halign: Gtk.Align.END,
             visible: true,        
             name: 'time-repeat-entry'
@@ -161,14 +161,14 @@ export default class ReminderAlarmClockPreferences extends ExtensionPreferences 
 
         timeRepeatEntry.connect('changed', (self) => {
             if (/^([0-9]|0[0-9]|1[0-9]|2[0-3]):[0-5][0-9]$/.test(self.text)) {
-                this.settings.set_string('time-repeat', self.text);
+                settings.set_string('time-repeat', self.text);
                 self.secondary_icon_name = '';
             } else {
                 self.secondary_icon_name = 'dialog-error-symbolic';
             }
         });
 
-        this.settings.bind(
+        settings.bind(
             'time-repeat',
             timeRepeatEntry,
             'icon-press',
@@ -183,7 +183,7 @@ export default class ReminderAlarmClockPreferences extends ExtensionPreferences 
         prefsWidget.attach(repeatLabel, 0, 6, 1, 1);
 
         let repeatSwitch = new Gtk.Switch({
-            active: this.settings.get_boolean('repeat'),
+            active: settings.get_boolean('repeat'),
             halign: Gtk.Align.END,
             visible: true
         });
@@ -192,7 +192,7 @@ export default class ReminderAlarmClockPreferences extends ExtensionPreferences 
             timeRepeatEntry.set_sensitive(self.active);
         });
 
-        this.settings.bind(
+        settings.bind(
             'repeat',
             repeatSwitch,
             'active',
@@ -212,13 +212,13 @@ export default class ReminderAlarmClockPreferences extends ExtensionPreferences 
         prefsWidget.attach(presentsLabel, 0, 8, 1, 1);
 
         let presentsEntry = new Gtk.Entry({
-            text: this.settings.get_string('presents'),
+            text: settings.get_string('presents'),
             halign: Gtk.Align.END,
             visible: true
         });
         prefsWidget.attach(presentsEntry, 1, 8, 1, 1);
 
-        this.settings.bind(
+        settings.bind(
             'presents',
             presentsEntry,
             'text',
@@ -233,8 +233,8 @@ export default class ReminderAlarmClockPreferences extends ExtensionPreferences 
         });
 
         showTestNotificationButton.connect('clicked', () => {
-            this.settings.set_boolean(
-                'show-test-notification', !this.settings.get_boolean(
+            settings.set_boolean(
+                'show-test-notification', !settings.get_boolean(
                     'show-test-notification'));
         });
 
@@ -244,7 +244,7 @@ export default class ReminderAlarmClockPreferences extends ExtensionPreferences 
     }
 
     soundChooserLabel() {
-        let file = Gio.File.new_for_uri(this.settings.get_string('sound-file-path'))
+        let file = Gio.File.new_for_uri(this.getSettings().get_string('sound-file-path'))
         let filename = file.get_basename() || "None"
         return `${_('Selected')} "${filename}". ${_('Choose new…')}`;
     }
